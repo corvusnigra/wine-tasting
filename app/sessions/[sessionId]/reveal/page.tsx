@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { RevealConfetti } from "@/components/session/RevealConfetti";
 import {
   aggregateNotes,
   pickBadges,
@@ -119,6 +120,7 @@ export default async function RevealPage({ params }: { params: Params }) {
 
   return (
     <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 w-full wine-vignette">
+      {winner && <RevealConfetti />}
       {/* Hero */}
       <header className="mb-10 sm:mb-14 anim-fade-up">
         <Link

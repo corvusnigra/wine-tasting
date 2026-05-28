@@ -7,13 +7,8 @@ import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { EntityAutocomplete } from "@/components/wine/EntityAutocomplete";
 import { WineCreateDialog, type CreatedWine } from "@/components/wine/WineCreateDialog";
+import { SortableWineList, type WineRef } from "./SortableWineList";
 import type { SearchHit } from "@/lib/search/api";
-
-type WineRef = {
-  id: string;
-  name: string;
-  vintage: number | null;
-};
 
 function searchHitToWineRef(hit: SearchHit): WineRef {
   return {
@@ -45,13 +40,6 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
   }
   function removeWine(id: string) {
     setWines(wines.filter((w) => w.id !== id));
-  }
-  function moveWine(from: number, to: number) {
-    if (to < 0 || to >= wines.length) return;
-    const copy = [...wines];
-    const [item] = copy.splice(from, 1);
-    copy.splice(to, 0, item);
-    setWines(copy);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -169,52 +157,11 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
             </div>
 
             {wines.length > 0 && (
-              <ol className="flex flex-col mb-6">
-                {wines.map((w, idx) => (
-                  <li
-                    key={w.id}
-                    className="grid grid-cols-[2.5rem_1fr_auto] gap-4 items-baseline py-4 border-t border-border first:border-t-0 group"
-                  >
-                    <span className="editorial-num text-2xl text-gold-soft text-right">
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <div>
-                      <div className="font-display text-xl">{w.name}</div>
-                      {w.vintage && (
-                        <div className="text-xs text-muted italic mt-0.5">{w.vintage}</div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        onClick={() => moveWine(idx, idx - 1)}
-                        disabled={idx === 0}
-                        className="w-7 h-7 rounded-full hover:text-gold disabled:opacity-30"
-                        aria-label="Вверх"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveWine(idx, idx + 1)}
-                        disabled={idx === wines.length - 1}
-                        className="w-7 h-7 rounded-full hover:text-gold disabled:opacity-30"
-                        aria-label="Вниз"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeWine(w.id)}
-                        className="w-7 h-7 rounded-full hover:text-rust text-muted"
-                        aria-label="Убрать"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <SortableWineList
+                wines={wines}
+                onChange={setWines}
+                onRemove={removeWine}
+              />
             )}
 
             <div className="field-group with-margin">
