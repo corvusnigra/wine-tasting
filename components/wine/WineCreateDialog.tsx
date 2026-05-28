@@ -83,7 +83,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md data-[state=open]:animate-[fade-in_0.2s_ease-out] data-[state=closed]:animate-[fade-in_0.15s_ease-out_reverse]" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100vw-1.5rem)] max-w-xl max-h-[92dvh] bg-surface text-foreground border border-border rounded-2xl shadow-2xl overflow-hidden data-[state=open]:animate-[fade-up_0.25s_cubic-bezier(0.16,1,0.3,1)] focus:outline-none"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100vw-1.5rem)] max-w-xl max-h-[92dvh] bg-surface text-foreground border border-border rounded-2xl shadow-2xl overflow-hidden data-[state=open]:animate-[fade-in_0.2s_ease-out] focus:outline-none"
         >
           <form
             onSubmit={onSubmit}
