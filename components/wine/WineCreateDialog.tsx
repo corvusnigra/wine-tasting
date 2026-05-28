@@ -80,10 +80,20 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md data-[state=open]:animate-[fade-in_0.2s_ease-out] data-[state=closed]:animate-[fade-in_0.15s_ease-out_reverse]" />
+        <Dialog.Overlay
+          style={{ position: "fixed", inset: 0, zIndex: 40 }}
+          className="bg-black/60 backdrop-blur-md data-[state=open]:animate-[fade-in_0.2s_ease-out]"
+        />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100vw-1.5rem)] max-w-xl max-h-[92dvh] bg-surface text-foreground border border-border rounded-2xl shadow-2xl overflow-hidden data-[state=open]:animate-[fade-in_0.2s_ease-out] focus:outline-none"
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 50,
+          }}
+          className="w-[calc(100vw-1.5rem)] max-w-xl max-h-[92dvh] bg-surface text-foreground border border-border rounded-2xl shadow-2xl overflow-hidden data-[state=open]:animate-[fade-in_0.2s_ease-out] focus:outline-none"
         >
           <form
             onSubmit={onSubmit}
