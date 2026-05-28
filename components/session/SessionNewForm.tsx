@@ -192,21 +192,30 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
           <span className="text-xs">·</span>
         </div>
 
-        <div className="flex gap-3 justify-end">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="btn-ghost h-12 px-6 rounded-full smallcaps text-xs"
-          >
-            {tActions("cancel")}
-          </button>
-          <button
-            type="submit"
-            disabled={submitting || !title.trim() || wines.length === 0}
-            className="btn-seal h-12 px-8 rounded-full inline-flex items-center gap-2"
-          >
-                        <span>{t("submit")}</span>
-          </button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-3 justify-end w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="btn-ghost h-12 px-6 rounded-full smallcaps text-xs"
+            >
+              {tActions("cancel")}
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !title.trim() || wines.length === 0}
+              className="btn-seal h-12 px-8 rounded-full inline-flex items-center gap-2"
+            >
+              <span>{t("submit")}</span>
+            </button>
+          </div>
+          {(!title.trim() || wines.length === 0) && (
+            <p className="text-xs text-muted italic text-right">
+              {!title.trim() && "Дайте название вечеру"}
+              {!title.trim() && wines.length === 0 && " · "}
+              {wines.length === 0 && "Добавьте хотя бы одно вино"}
+            </p>
+          )}
         </div>
       </form>
       <WineCreateDialog
