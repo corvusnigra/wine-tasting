@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ScaleSlider } from "./ScaleSlider";
 import { DescriptorPicker } from "./DescriptorPicker";
@@ -99,7 +100,6 @@ export function SatCard({
   const [draft, setDraft] = useState<DraftNote>(initial ?? EMPTY_DRAFT);
   const [scale, setScale] = useState<Scale>(initialScale);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -131,17 +131,23 @@ export function SatCard({
     const { error } = await supabase
       .from("tasting_notes")
       .upsert(payload, { onConflict: "wine_in_session_id,user_id" });
-    if (error && submit) setError(error.message);
+    if (error && submit) {
+      toast.error(error.message);
+      throw error;
+    }
   }
 
   async function onSubmit() {
     setSubmitting(true);
-    setError(null);
-    await save(true);
-    setSubmitting(false);
-    if (!error) {
+    try {
+      await save(true);
+      toast.success("Оценка сохранена");
       router.push(backHref);
       router.refresh();
+    } catch {
+      // toast already shown
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -429,8 +435,6 @@ export function SatCard({
           </section>
         )}
       </div>
-
-      {error && <p className="text-sm text-rust italic">{error}</p>}
 
       <footer className="fixed bottom-0 inset-x-0 z-40 px-5 sm:px-8 lg:px-12 pt-3 pb-safe bg-background/90 backdrop-blur-md border-t border-border">
         <div className="max-w-2xl mx-auto flex gap-3">

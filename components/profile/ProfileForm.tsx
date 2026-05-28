@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Scale = "5stars" | "20pt";
@@ -20,17 +21,13 @@ export function ProfileForm({
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [scale, setScale] = useState<Scale>(initialScale);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setError(null);
-    setSaved(false);
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) {
-      setError("Войдите снова");
+      toast.error("Войдите снова");
       setSaving(false);
       return;
     }
@@ -43,12 +40,11 @@ export function ProfileForm({
       .eq("id", userData.user.id);
     setSaving(false);
     if (error) {
-      setError(error.message);
+      toast.error(error.message);
       return;
     }
-    setSaved(true);
+    toast.success("Профиль обновлён");
     router.refresh();
-    setTimeout(() => setSaved(false), 2500);
   }
 
   return (
@@ -112,22 +108,16 @@ export function ProfileForm({
         </section>
       )}
 
-      {error && <p className="text-sm text-rust italic">{error}</p>}
-
       <div className="flex items-center justify-between gap-3 pt-4 border-t border-border">
-        {saved ? (
-          <p className="smallcaps text-xs text-gold">✓ сохранено</p>
-        ) : (
-          <span className="text-xs text-muted italic">
-            Изменения применятся сразу.
-          </span>
-        )}
+        <span className="text-xs text-muted italic">
+          Изменения применятся сразу.
+        </span>
         <button
           type="submit"
           disabled={saving}
           className="btn-seal h-12 px-7 rounded-full inline-flex items-center gap-2"
         >
-                    <span>{saving ? "…" : "Сохранить"}</span>
+          <span>{saving ? "…" : "Сохранить"}</span>
         </button>
       </div>
     </form>

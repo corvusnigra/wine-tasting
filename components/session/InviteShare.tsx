@@ -1,20 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 export function InviteShare({ inviteUrl }: { inviteUrl: string }) {
   const t = useTranslations("group.invite");
-  const [copied, setCopied] = useState(false);
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      toast.success(t("copied"));
     } catch {
-      // ignore
+      toast.error("Не удалось скопировать");
     }
   }
 
@@ -38,7 +36,7 @@ export function InviteShare({ inviteUrl }: { inviteUrl: string }) {
             onClick={copy}
             className="btn-ghost h-10 px-4 rounded-full text-sm smallcaps"
           >
-            {copied ? t("copied") : t("copy")}
+            {t("copy")}
           </button>
         </div>
       </div>

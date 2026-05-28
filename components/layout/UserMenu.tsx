@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from "next/link";
 
 function initials(name: string | null | undefined): string {
@@ -15,35 +15,24 @@ type Props = {
 };
 
 export function UserMenu({ displayName, email }: Props) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (!containerRef.current?.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, []);
-
   return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className="avatar-initial w-8 h-8 text-[0.85rem] hover:scale-105 transition-transform"
-        title={displayName ?? "Профиль"}
-      >
-        {initials(displayName)}
-      </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full mt-2 min-w-[14rem] bg-surface border border-border rounded-2xl shadow-2xl p-2 z-30"
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          className="avatar-initial w-8 h-8 text-[0.85rem] hover:scale-105 transition-transform data-[state=open]:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          title={displayName ?? "Профиль"}
+          aria-label="Меню профиля"
+        >
+          {initials(displayName)}
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={8}
+          collisionPadding={8}
+          className="min-w-[14rem] bg-surface border border-border rounded-2xl shadow-2xl p-2 z-50 data-[state=open]:animate-[fade-up_0.2s_ease-out] origin-top-right"
         >
           <div className="px-3 py-2 border-b border-border mb-1">
             <p className="font-display italic text-base truncate">
@@ -53,25 +42,26 @@ export function UserMenu({ displayName, email }: Props) {
               <p className="text-xs text-muted truncate font-mono">{email}</p>
             )}
           </div>
-          <Link
-            href="/profile"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="block px-3 py-2 rounded-xl smallcaps text-xs text-foreground hover:bg-bordeaux/10 transition-colors"
-          >
-            Профиль
-          </Link>
-          <form action="/api/auth/signout" method="post" className="contents">
-            <button
-              type="submit"
-              role="menuitem"
-              className="w-full text-left px-3 py-2 rounded-xl smallcaps text-xs text-foreground hover:bg-bordeaux/10 transition-colors"
+          <DropdownMenu.Item asChild>
+            <Link
+              href="/profile"
+              className="block px-3 py-2 rounded-xl smallcaps text-xs text-foreground hover:bg-bordeaux/10 data-[highlighted]:bg-bordeaux/10 outline-none cursor-pointer transition-colors"
             >
-              Выйти
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
+              Профиль
+            </Link>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item asChild>
+            <form action="/api/auth/signout" method="post">
+              <button
+                type="submit"
+                className="w-full text-left px-3 py-2 rounded-xl smallcaps text-xs text-foreground hover:bg-bordeaux/10 data-[highlighted]:bg-bordeaux/10 outline-none cursor-pointer transition-colors"
+              >
+                Выйти
+              </button>
+            </form>
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }

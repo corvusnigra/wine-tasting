@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { writeGuestId } from "@/lib/guest/guest-id";
 
@@ -12,16 +13,14 @@ export function GuestForm({ returnTo = "/" }: { returnTo?: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    setError(null);
     const supabase = createSupabaseBrowserClient();
     const { data, error } = await supabase.auth.signInAnonymously();
     if (error || !data.user) {
-      setError(error?.message || tErr("generic"));
+      toast.error(error?.message || tErr("generic"));
       setSubmitting(false);
       return;
     }
@@ -31,7 +30,7 @@ export function GuestForm({ returnTo = "/" }: { returnTo?: string }) {
       .update({ display_name: name.trim() })
       .eq("id", data.user.id);
     if (updErr) {
-      setError(updErr.message);
+      toast.error(updErr.message);
       setSubmitting(false);
       return;
     }
@@ -57,11 +56,10 @@ export function GuestForm({ returnTo = "/" }: { returnTo?: string }) {
       <button
         type="submit"
         disabled={submitting || !name.trim()}
-        className="h-12 rounded-full bg-bordeaux text-cream font-medium hover:bg-bordeaux-light disabled:opacity-50 transition-colors"
+        className="btn-seal h-12 rounded-full font-medium disabled:opacity-50"
       >
         {t("submit")}
       </button>
-      {error && <p className="text-sm text-red-400">{error}</p>}
     </form>
   );
 }

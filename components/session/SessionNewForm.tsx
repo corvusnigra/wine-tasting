@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { EntityAutocomplete } from "@/components/wine/EntityAutocomplete";
 import { WineCreateDialog, type CreatedWine } from "@/components/wine/WineCreateDialog";
@@ -33,7 +34,6 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
   const [wines, setWines] = useState<WineRef[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   function addWineFromSearch(hit: SearchHit) {
     if (wines.some((w) => w.id === hit.id)) return;
@@ -57,11 +57,10 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    setError(null);
 
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) {
-      setError("Войдите снова");
+      toast.error("Войдите снова");
       setSubmitting(false);
       return;
     }
@@ -78,7 +77,7 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
       .single();
 
     if (sessionErr || !sessionRow) {
-      setError(sessionErr?.message ?? "Не удалось создать вечер");
+      toast.error(sessionErr?.message ?? "Не удалось создать вечер");
       setSubmitting(false);
       return;
     }
@@ -91,7 +90,7 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
       }));
       const { error: wisErr } = await supabase.from("wines_in_session").insert(rows);
       if (wisErr) {
-        setError(wisErr.message);
+        toast.error(wisErr.message);
         setSubmitting(false);
         return;
       }
@@ -241,10 +240,6 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
             </div>
           </section>
         </div>
-
-        {error && (
-          <p className="mt-8 text-sm text-rust italic">{error}</p>
-        )}
 
         <div className="ornament my-12">
           <span className="text-xs">·</span>
