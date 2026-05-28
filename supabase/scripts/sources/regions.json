@@ -1,0 +1,64 @@
+[
+  { "name_ru": "Тоскана", "name_en": "Tuscany", "country_code": "IT", "classification": null, "search_aliases": ["тоскана", "tuscany", "toscana"] },
+  { "name_ru": "Брунелло ди Монтальчино", "name_en": "Brunello di Montalcino", "country_code": "IT", "classification": "DOCG", "search_aliases": ["брунелло", "монтальчино", "brunello"] },
+  { "name_ru": "Кьянти Классико", "name_en": "Chianti Classico", "country_code": "IT", "classification": "DOCG", "search_aliases": ["кьянти", "chianti", "chianti classico"] },
+  { "name_ru": "Болгери", "name_en": "Bolgheri", "country_code": "IT", "classification": "DOC", "search_aliases": ["болгери", "bolgheri"] },
+  { "name_ru": "Пьемонт", "name_en": "Piemonte", "country_code": "IT", "classification": null, "search_aliases": ["пьемонт", "piemonte", "piedmont"] },
+  { "name_ru": "Бароло", "name_en": "Barolo", "country_code": "IT", "classification": "DOCG", "search_aliases": ["бароло", "barolo"] },
+  { "name_ru": "Барбареско", "name_en": "Barbaresco", "country_code": "IT", "classification": "DOCG", "search_aliases": ["барбареско", "barbaresco"] },
+  { "name_ru": "Венето", "name_en": "Veneto", "country_code": "IT", "classification": null, "search_aliases": ["венето", "veneto"] },
+  { "name_ru": "Амароне делла Вальполичелла", "name_en": "Amarone della Valpolicella", "country_code": "IT", "classification": "DOCG", "search_aliases": ["амароне", "вальполичелла", "amarone", "valpolicella"] },
+  { "name_ru": "Соаве", "name_en": "Soave", "country_code": "IT", "classification": "DOC", "search_aliases": ["соаве", "soave"] },
+  { "name_ru": "Сицилия", "name_en": "Sicilia", "country_code": "IT", "classification": null, "search_aliases": ["сицилия", "sicilia", "sicily"] },
+  { "name_ru": "Этна", "name_en": "Etna", "country_code": "IT", "classification": "DOC", "search_aliases": ["этна", "etna"] },
+
+  { "name_ru": "Бордо", "name_en": "Bordeaux", "country_code": "FR", "classification": "AOC", "search_aliases": ["бордо", "bordeaux"] },
+  { "name_ru": "Бургундия", "name_en": "Bourgogne", "country_code": "FR", "classification": "AOC", "search_aliases": ["бургундия", "bourgogne", "burgundy"] },
+  { "name_ru": "Шампань", "name_en": "Champagne", "country_code": "FR", "classification": "AOC", "search_aliases": ["шампань", "шампанское", "champagne"] },
+  { "name_ru": "Долина Роны", "name_en": "Rhône Valley", "country_code": "FR", "classification": "AOC", "search_aliases": ["долина роны", "rhone", "côtes du rhône"] },
+  { "name_ru": "Долина Луары", "name_en": "Loire Valley", "country_code": "FR", "classification": "AOC", "search_aliases": ["долина луары", "loire"] },
+  { "name_ru": "Эльзас", "name_en": "Alsace", "country_code": "FR", "classification": "AOC", "search_aliases": ["эльзас", "alsace"] },
+  { "name_ru": "Прованс", "name_en": "Provence", "country_code": "FR", "classification": "AOC", "search_aliases": ["прованс", "provence"] },
+
+  { "name_ru": "Риоха", "name_en": "Rioja", "country_code": "ES", "classification": "DOCa", "search_aliases": ["риоха", "rioja"] },
+  { "name_ru": "Рибера дель Дуэро", "name_en": "Ribera del Duero", "country_code": "ES", "classification": "DO", "search_aliases": ["рибера", "rivera del duero", "ribera del duero"] },
+  { "name_ru": "Приорат", "name_en": "Priorat", "country_code": "ES", "classification": "DOQ", "search_aliases": ["приорат", "priorat"] },
+  { "name_ru": "Пенедес", "name_en": "Penedès", "country_code": "ES", "classification": "DO", "search_aliases": ["пенедес", "penedes", "penedès"] },
+  { "name_ru": "Рияс Байшас", "name_en": "Rías Baixas", "country_code": "ES", "classification": "DO", "search_aliases": ["рияс байшас", "rias baixas"] },
+
+  { "name_ru": "Мозель", "name_en": "Mosel", "country_code": "DE", "classification": "QbA", "search_aliases": ["мозель", "mosel", "mosel-saar-ruwer"] },
+  { "name_ru": "Рейнгау", "name_en": "Rheingau", "country_code": "DE", "classification": "QbA", "search_aliases": ["рейнгау", "rheingau"] },
+
+  { "name_ru": "Дору", "name_en": "Douro", "country_code": "PT", "classification": "DOC", "search_aliases": ["дору", "douro", "порт", "port"] },
+  { "name_ru": "Виньо Верде", "name_en": "Vinho Verde", "country_code": "PT", "classification": "DOC", "search_aliases": ["виньо верде", "vinho verde"] },
+
+  { "name_ru": "Долина Напа", "name_en": "Napa Valley", "country_code": "US", "classification": "AVA", "search_aliases": ["напа", "napa valley", "napa"] },
+  { "name_ru": "Сонома", "name_en": "Sonoma County", "country_code": "US", "classification": "AVA", "search_aliases": ["сонома", "sonoma"] },
+
+  { "name_ru": "Мендоса", "name_en": "Mendoza", "country_code": "AR", "classification": null, "search_aliases": ["мендоса", "mendoza"] },
+  { "name_ru": "Касабланка", "name_en": "Casablanca Valley", "country_code": "CL", "classification": null, "search_aliases": ["касабланка", "casablanca"] },
+  { "name_ru": "Стелленбош", "name_en": "Stellenbosch", "country_code": "ZA", "classification": null, "search_aliases": ["стелленбош", "stellenbosch"] },
+  { "name_ru": "Маргарет Ривер", "name_en": "Margaret River", "country_code": "AU", "classification": null, "search_aliases": ["маргарет ривер", "margaret river"] },
+  { "name_ru": "Мальборо", "name_en": "Marlborough", "country_code": "NZ", "classification": null, "search_aliases": ["мальборо", "marlborough"] },
+
+  { "name_ru": "Краснодарский край", "name_en": "Krasnodar Krai", "country_code": "RU", "classification": "ЗГУ", "search_aliases": ["краснодар", "кубань", "krasnodar", "kuban"] },
+  { "name_ru": "Крым", "name_en": "Crimea", "country_code": "RU", "classification": "ЗГУ", "search_aliases": ["крым", "крымское", "crimea"] },
+  { "name_ru": "Долина Дона", "name_en": "Don Valley", "country_code": "RU", "classification": "ЗГУ", "search_aliases": ["долина дона", "ростов", "don valley"] },
+  { "name_ru": "Дагестан", "name_en": "Dagestan", "country_code": "RU", "classification": "ЗГУ", "search_aliases": ["дагестан", "dagestan"] },
+  { "name_ru": "Ставропольский край", "name_en": "Stavropol Krai", "country_code": "RU", "classification": "ЗГУ", "search_aliases": ["ставрополь", "stavropol"] },
+  { "name_ru": "Балаклавская долина", "name_en": "Balaklava Valley", "country_code": "RU", "classification": "ЗНМП", "search_aliases": ["балаклава", "balaklava"] },
+  { "name_ru": "Севастополь", "name_en": "Sevastopol", "country_code": "RU", "classification": "ЗГУ", "search_aliases": ["севастополь", "sevastopol"] },
+
+  { "name_ru": "Кахетия", "name_en": "Kakheti", "country_code": "GE", "classification": "PDO", "search_aliases": ["кахетия", "kakheti"] },
+  { "name_ru": "Имеретия", "name_en": "Imereti", "country_code": "GE", "classification": "PDO", "search_aliases": ["имеретия", "imereti"] },
+  { "name_ru": "Картли", "name_en": "Kartli", "country_code": "GE", "classification": "PDO", "search_aliases": ["картли", "kartli"] },
+  { "name_ru": "Цинандали", "name_en": "Tsinandali", "country_code": "GE", "classification": "PDO", "search_aliases": ["цинандали", "tsinandali"] },
+  { "name_ru": "Мукузани", "name_en": "Mukuzani", "country_code": "GE", "classification": "PDO", "search_aliases": ["мукузани", "mukuzani"] },
+
+  { "name_ru": "Вайоц Дзор", "name_en": "Vayots Dzor", "country_code": "AM", "classification": null, "search_aliases": ["вайоц дзор", "vayots dzor", "арени"] },
+  { "name_ru": "Арагацотн", "name_en": "Aragatsotn", "country_code": "AM", "classification": null, "search_aliases": ["арагацотн", "aragatsotn"] },
+
+  { "name_ru": "Кодру", "name_en": "Codru", "country_code": "MD", "classification": "IGP", "search_aliases": ["кодру", "codru"] },
+  { "name_ru": "Валул-луй-Траян", "name_en": "Valul lui Traian", "country_code": "MD", "classification": "IGP", "search_aliases": ["валул-луй-траян", "valul lui traian"] },
+  { "name_ru": "Штефан Водэ", "name_en": "Ștefan Vodă", "country_code": "MD", "classification": "IGP", "search_aliases": ["штефан водэ", "stefan voda"] }
+]

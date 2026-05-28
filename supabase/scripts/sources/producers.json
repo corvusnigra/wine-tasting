@@ -1,0 +1,37 @@
+[
+  { "name": "Абрау-Дюрсо", "region_name_en": "Krasnodar Krai", "search_aliases": ["абрау", "абрау-дюрсо", "abrau", "abrau-durso"] },
+  { "name": "Фанагория", "region_name_en": "Krasnodar Krai", "search_aliases": ["фанагория", "fanagoria"] },
+  { "name": "Лефкадия", "region_name_en": "Krasnodar Krai", "search_aliases": ["лефкадия", "lefkadia"] },
+  { "name": "Сикоры", "region_name_en": "Krasnodar Krai", "search_aliases": ["сикоры", "sikory"] },
+  { "name": "Галицкий и Галицкий", "region_name_en": "Krasnodar Krai", "search_aliases": ["галицкий", "галицкий и галицкий", "galitsky"] },
+  { "name": "Усадьба Дивноморское", "region_name_en": "Krasnodar Krai", "search_aliases": ["дивноморское", "divnomorskoe"] },
+  { "name": "Гай-Кодзор", "region_name_en": "Krasnodar Krai", "search_aliases": ["гай-кодзор", "gai-kodzor"] },
+  { "name": "Поместье Голубицкое", "region_name_en": "Krasnodar Krai", "search_aliases": ["голубицкое", "golubitskoe"] },
+  { "name": "Кубань-Вино", "region_name_en": "Krasnodar Krai", "search_aliases": ["кубань-вино", "chateau tamagne", "kuban-vino"] },
+  { "name": "Шато Пино", "region_name_en": "Krasnodar Krai", "search_aliases": ["шато пино", "chateau pinot"] },
+
+  { "name": "Массандра", "region_name_en": "Crimea", "search_aliases": ["массандра", "massandra"] },
+  { "name": "Инкерман", "region_name_en": "Sevastopol", "search_aliases": ["инкерман", "inkerman"] },
+  { "name": "Усадьба Перовских", "region_name_en": "Crimea", "search_aliases": ["перовские", "perovskikh"] },
+  { "name": "Бельбек", "region_name_en": "Sevastopol", "search_aliases": ["бельбек", "belbek"] },
+  { "name": "Олег Репин", "region_name_en": "Sevastopol", "search_aliases": ["олег репин", "oleg repin"] },
+
+  { "name": "Дербент Вино", "region_name_en": "Dagestan", "search_aliases": ["дербент", "derbent"] },
+  { "name": "Винодельня Ведерниковъ", "region_name_en": "Don Valley", "search_aliases": ["ведерниковъ", "ведерников", "vedernikov"] },
+
+  { "name": "Pheasant's Tears", "region_name_en": "Kakheti", "search_aliases": ["pheasants tears", "слёзы фазана"] },
+  { "name": "Schuchmann Wines", "region_name_en": "Kakheti", "search_aliases": ["schuchmann", "шухманн"] },
+  { "name": "Khareba", "region_name_en": "Kakheti", "search_aliases": ["khareba", "хареба"] },
+  { "name": "Château Mukhrani", "region_name_en": "Kartli", "search_aliases": ["mukhrani", "мухрани"] },
+
+  { "name": "Zorah", "region_name_en": "Vayots Dzor", "search_aliases": ["zorah", "зора"] },
+  { "name": "ArmAs", "region_name_en": "Aragatsotn", "search_aliases": ["armas", "армас"] },
+  { "name": "Karas", "region_name_en": "Aragatsotn", "search_aliases": ["karas", "карас"] },
+  { "name": "Voskevaz", "region_name_en": "Aragatsotn", "search_aliases": ["voskevaz", "воскеваз"] },
+
+  { "name": "Antinori", "region_name_en": "Chianti Classico", "search_aliases": ["antinori", "антинори"] },
+  { "name": "Ornellaia", "region_name_en": "Bolgheri", "search_aliases": ["ornellaia", "орнеллайя"] },
+  { "name": "Biondi-Santi", "region_name_en": "Brunello di Montalcino", "search_aliases": ["biondi santi", "бионди-санти"] },
+  { "name": "Gaja", "region_name_en": "Barbaresco", "search_aliases": ["gaja", "гайя"] },
+  { "name": "Vega Sicilia", "region_name_en": "Ribera del Duero", "search_aliases": ["vega sicilia", "вега сицилия"] }
+]

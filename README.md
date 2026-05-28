@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sommelier Night
 
-## Getting Started
+Дневник дегустаций для своей компании. Один человек создаёт «вечер», 3-6 друзей
+параллельно ставят структурированные WSET-оценки со своих телефонов, после
+раскрытия — side-by-side таблица, средние, аутлаеры. История вечеров.
 
-First, run the development server:
+**Стек**: Next.js 16 (App Router) + React 19 + TypeScript strict + Tailwind 4 + Supabase EU + Realtime + next-intl + Vitest.
+
+## Локальный запуск
+
+Требования: Node 20+, pnpm 10+, Docker.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dlx supabase@latest start        # Postgres + Auth + Realtime + Studio
+cp .env.local.example .env.local      # заполнить URL/keys из вывода supabase start
+pnpm seed                             # справочники: сорта, регионы, производители, дескрипторы
+pnpm dev                              # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Локальные URL'ы (порты сдвинуты на +100 от дефолтных, чтобы не конфликтовать с другими supabase-проектами):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Сервис | URL |
+|---|---|
+| Приложение | http://localhost:3000 |
+| Supabase API | http://127.0.0.1:54421 |
+| Postgres | postgresql://postgres:postgres@127.0.0.1:54422/postgres |
+| Studio | http://127.0.0.1:54423 |
+| Mailpit (просмотр magic-link писем) | http://127.0.0.1:54424 |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Команды
 
-## Learn More
+```bash
+pnpm dev                  # dev-сервер
+pnpm build                # production-билд + tsc
+pnpm test                 # vitest unit-тесты
+pnpm test:watch           # vitest в watch
+pnpm seed                 # перенакачать справочники
+pnpm supabase:types       # регенерировать lib/supabase/types.ts из схемы
+pnpm lint                 # eslint
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Структура
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+/app                   # Next.js App Router (страницы, route handlers)
+/components            # UI: layout, wine, session, tasting, search
+/lib                   # supabase clients, search, tasting (scales, vocabulary, schemas), utils, groups
+/messages              # i18n: ru.json (источник), en.json (стаб для v2)
+/supabase
+  /migrations          # 3 миграции: init+RLS, search, realtime publication
+  /scripts/seed.ts     # idempotent upsert справочников
+  /scripts/sources/*.json
+/tests/unit            # vitest
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Текущий статус MVP
 
-## Deploy on Vercel
+### Готово end-to-end
+- Лендинг + 18+ заглушка + dark mode + кириллические шрифты (Cormorant Garamond + Inter)
+- Magic-link auth (через Mailpit локально) + гостевой вход (signInAnonymously)
+- Auto-create группы «Моя компания» на первом логине
+- Создание вечера: title, дата, флайт 1-N вин с автокомплитом и inline-созданием
+- WSET Standard tasting card — 4 свайп-шага, debounced autosave, 5★/20pt-переключатель
+- Realtime: подписка на `tasting_notes` + polling-fallback при отказе канала
+- Раскрытие: side-by-side таблица, средние, аутлаеры |z|>1, бейджи 🏆🎲🎯
+- Архив сессий, карточка вина с историей, глобальный поиск (FTS + trigram)
+- 12 unit-тестов: scales, invite-code, search-normalize
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Известные ограничения
+- Английский UI — только стаб в `messages/en.json`, заполняется в v2.
+- Аутентификация по email — magic link; Telegram-логин в v1.
+- Колесо ароматов — chip-list в MVP, полное колесо Энн Ноубл в v1.
+- Фото бутылок — Storage готов, UI в v1.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Развёртывание
+
+Не настроено в текущем коммите. По плану:
+- Vercel (Hobby tier) + Cloudflare proxy перед `*.vercel.app` + домен в зоне `.ru`/`.app`
+- Supabase EU (Frankfurt) staging/prod
+- Подробности — см. `/Users/moi/.claude/plans/sommelier-night-ticklish-abelson.md`
+
+## Юридический минимум
+
+- 18+ заглушка при первом визите, согласие в cookie+localStorage на 30 дней
+- Бейдж 18+ в шапке и футере
+- Дисклеймер в футере: «Сайт носит информационный характер … Чрезмерное употребление алкоголя вредит вашему здоровью.»
+- Без кнопок «купить», без партнёрок, без ссылок на ритейлеров

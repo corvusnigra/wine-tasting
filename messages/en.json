@@ -1,0 +1,7 @@
+{
+  "app": {
+    "name": "Sommelier Night",
+    "tagline": "A tasting journal for your group"
+  },
+  "_note": "EN locale is a stub for v2. RU is the source-of-truth for MVP."
+}
