@@ -110,10 +110,21 @@ export function DescriptorPicker({
           </button>
         </Drawer.Trigger>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />
+          <Drawer.Overlay
+            style={{ position: "fixed", inset: 0, zIndex: 40 }}
+            className="bg-black/60 backdrop-blur-sm"
+          />
           <Drawer.Content
             aria-describedby={undefined}
-            className="fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-border rounded-t-3xl max-h-[85dvh] flex flex-col outline-none"
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 50,
+              maxHeight: "85dvh",
+            }}
+            className="bg-surface border-t border-border rounded-t-3xl flex flex-col outline-none"
           >
             <div
               aria-hidden
