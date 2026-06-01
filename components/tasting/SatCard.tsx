@@ -444,7 +444,7 @@ export function SatCard({
         )}
       </div>
 
-      <footer className="fixed bottom-0 inset-x-0 z-40 px-5 sm:px-8 lg:px-12 pt-3 pb-safe bg-background/90 backdrop-blur-md border-t border-border">
+      <footer className="fixed bottom-0 inset-x-0 z-50 px-5 sm:px-8 lg:px-12 pt-3 pb-safe bg-background border-t border-border shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.5)]">
         <div className="max-w-2xl mx-auto flex gap-3">
           <button
             type="button"

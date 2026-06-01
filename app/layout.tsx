@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { AgeGate } from "@/components/layout/AgeGate";
-import { Footer } from "@/components/layout/Footer";
+import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
 import { Header } from "@/components/layout/Header";
 import { Providers } from "@/components/layout/Providers";
 
@@ -62,7 +62,7 @@ export default async function RootLayout({
             <AgeGate>
               <Header />
               <main className="flex-1 flex flex-col">{children}</main>
-              <Footer />
+              <ConditionalFooter />
             </AgeGate>
           </Providers>
         </NextIntlClientProvider>
