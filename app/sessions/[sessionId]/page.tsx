@@ -70,7 +70,11 @@ export default async function SessionPage({ params }: { params: Params }) {
   const hdrs = await headers();
   const host = hdrs.get("host") ?? "localhost:3000";
   const protocol = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
-  const inviteUrl = code ? `${protocol}://${host}/invite/${code}` : null;
+  // Session-scoped invite — scanning the QR lands guests straight on this
+  // evening to rate, not on the host dashboard.
+  const inviteUrl = code
+    ? `${protocol}://${host}/invite/${code}?s=${sessionId}`
+    : null;
 
   const progressByWine = new Map<string, number>();
   const participantIds = new Set<string>();

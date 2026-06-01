@@ -2,9 +2,17 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type Params = Promise<{ code: string }>;
+type Search = Promise<{ s?: string }>;
 
-export default async function InvitePage({ params }: { params: Params }) {
+export default async function InvitePage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: Search;
+}) {
   const { code } = await params;
+  const { s: sessionId } = await searchParams;
   const supabase = await createSupabaseServerClient();
 
   const { data: invite } = await supabase
@@ -37,7 +45,10 @@ export default async function InvitePage({ params }: { params: Params }) {
 
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) {
-    redirect(`/invite/${code}/join`);
+    // Carry the session through the name-entry step so the guest lands on
+    // the evening, not the host dashboard.
+    const qs = sessionId ? `?s=${sessionId}` : "";
+    redirect(`/invite/${code}/join${qs}`);
   }
 
   const userId = userData.user.id;
@@ -66,6 +77,18 @@ export default async function InvitePage({ params }: { params: Params }) {
         .update({ used_at: new Date().toISOString() })
         .eq("id", invite.id);
     }
+  }
+
+  // Land guests straight on the evening if the link carried one and it
+  // belongs to this group; otherwise fall back to the group dashboard.
+  if (sessionId) {
+    const { data: sess } = await supabase
+      .from("tasting_sessions")
+      .select("id")
+      .eq("id", sessionId)
+      .eq("group_id", invite.group_id)
+      .maybeSingle();
+    if (sess) redirect(`/sessions/${sess.id}`);
   }
 
   redirect(`/groups/${invite.group_id}`);
