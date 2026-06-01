@@ -23,7 +23,7 @@ export async function Header() {
   return (
     <header className="px-5 sm:px-8 lg:px-12 py-4 sm:py-6 border-b border-border">
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
-        <Link href="/" className="group flex items-center gap-3 shrink-0 min-w-0">
+        <Link href="/" className="group flex items-center gap-3 min-w-0 flex-1">
           <span className="monogram transition-transform group-hover:rotate-[-6deg] shrink-0">
             SN
           </span>
@@ -31,7 +31,7 @@ export async function Header() {
             {t("name")}
           </span>
         </Link>
-        <nav className="flex items-center gap-4 sm:gap-6 text-sm shrink-0">
+        <nav className="flex items-center gap-3 sm:gap-6 text-sm shrink-0">
           <Link
             href="/archive"
             className="smallcaps text-xs text-muted hover:text-foreground transition-colors h-10 inline-flex items-center"
@@ -40,7 +40,7 @@ export async function Header() {
           </Link>
           <Link
             href="/search"
-            className="text-muted hover:text-foreground transition-colors h-10 w-10 inline-flex items-center justify-center -mx-2"
+            className="text-muted hover:text-foreground transition-colors h-10 w-10 inline-flex items-center justify-center"
             aria-label={tNav("search")}
           >
             <Search size={18} />
