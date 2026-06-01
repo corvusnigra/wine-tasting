@@ -110,7 +110,17 @@ export function DescriptorPicker({
         </div>
       )}
 
-      <Drawer.Root open={open} onOpenChange={setOpen}>
+      <Drawer.Root
+        open={open}
+        onOpenChange={(o) => {
+          // Drop focus from the trigger before Vaul aria-hides the background,
+          // otherwise the browser warns about aria-hidden on a focused element.
+          if (o && typeof document !== "undefined") {
+            (document.activeElement as HTMLElement | null)?.blur();
+          }
+          setOpen(o);
+        }}
+      >
         <Drawer.Trigger asChild>
           <button
             type="button"

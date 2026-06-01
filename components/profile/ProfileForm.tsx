@@ -25,12 +25,13 @@ export function ProfileForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
       toast.error("Войдите снова");
       setSaving(false);
       return;
     }
+    const userData = { user: session.user };
     const { error } = await supabase
       .from("profiles")
       .update({

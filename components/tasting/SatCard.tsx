@@ -117,8 +117,11 @@ export function SatCard({
   }, [draft]);
 
   async function save(submit: boolean) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
+    // getSession reads from local storage (no network) — keeps saving fast
+    // and resilient when the Supabase auth endpoint is slow to reach.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    const userData = { user: session.user };
     const overall_score = draft.overall_scale_raw
       ? normalizeScore(draft.overall_scale_raw)
       : null;

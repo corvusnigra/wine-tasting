@@ -46,8 +46,8 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
     e.preventDefault();
     setSubmitting(true);
 
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
       toast.error("Войдите снова");
       setSubmitting(false);
       return;
@@ -59,7 +59,7 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
         group_id: groupId,
         title: title.trim(),
         session_date: date,
-        created_by: userData.user.id,
+        created_by: session.user.id,
       })
       .select("id")
       .single();
