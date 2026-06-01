@@ -49,6 +49,14 @@ export default async function RevealPage({ params }: { params: Params }) {
     .eq("session_id", sessionId)
     .order("position", { ascending: true });
 
+  // Don't compute a winner before the host has revealed — RLS would only
+  // expose the viewer's own notes, producing a misleading partial result.
+  const hasWines = (wines ?? []).length > 0;
+  const allRevealed = hasWines && (wines ?? []).every((w) => w.revealed);
+  if (!allRevealed) {
+    redirect(`/sessions/${sessionId}`);
+  }
+
   type WineMeta = {
     id: string;
     name: string;
