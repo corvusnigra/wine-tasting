@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
 type Props<T extends string> = {
@@ -22,6 +22,7 @@ export function ScaleSlider<T extends string>({
 }: Props<T>) {
   const itemRefs = useRef(new Map<string, HTMLButtonElement>());
   const containerRef = useRef<HTMLDivElement>(null);
+  const [showHint, setShowHint] = useState(false);
 
   useEffect(() => {
     if (!value) return;
@@ -34,21 +35,38 @@ export function ScaleSlider<T extends string>({
   return (
     <fieldset>
       <div className="flex items-baseline justify-between gap-3 mb-2.5">
-        <div className="min-w-0">
-          <div className="smallcaps text-[11px] text-foreground">{label}</div>
+        <div className="min-w-0 flex items-center gap-2">
+          <span className="smallcaps text-[11px] text-foreground">{label}</span>
           {hint && (
-            <div className="text-[11px] text-muted italic mt-0.5">{hint}</div>
+            <button
+              type="button"
+              onClick={() => setShowHint((v) => !v)}
+              aria-label="Как проверить"
+              aria-expanded={showHint}
+              className={cn(
+                "shrink-0 inline-flex items-center justify-center w-5 h-5 -my-1.5 rounded-full border text-[10px] font-display italic leading-none transition-colors",
+                showHint
+                  ? "bg-gold/15 border-gold text-gold"
+                  : "border-gold/40 text-gold/70 hover:border-gold hover:text-gold"
+              )}
+            >
+              ?
+            </button>
           )}
         </div>
         <span className="font-display italic text-base text-gold shrink-0 transition-all">
           {value ? optionLabels[value] : "не выбрано"}
         </span>
       </div>
+
+      {hint && showHint && (
+        <p className="anim-fade-up text-[12px] text-muted italic leading-snug pl-3 border-l border-gold/40 mb-3">
+          {hint}
+        </p>
+      )}
+
       <div className="relative -mx-1">
-        <div
-          ref={containerRef}
-          className="scroll-row flex gap-1.5 px-1 py-1"
-        >
+        <div ref={containerRef} className="scroll-row flex gap-1.5 px-1 py-1">
           {options.map((opt) => {
             const selected = value === opt;
             return (

@@ -254,6 +254,7 @@ export function SatCard({
             </div>
             <ScaleSlider
               label="Интенсивность цвета"
+              hint="Наклоните бокал над белым фоном. Чем глубже и непрозрачнее цвет у края — тем выше интенсивность."
               options={INTENSITY_5}
               optionLabels={Object.fromEntries(
                 INTENSITY_5.map((k) => [k, tIntensity(k)])
@@ -292,6 +293,7 @@ export function SatCard({
             </div>
             <ScaleSlider
               label="Интенсивность аромата"
+              hint="Не вращая бокал, поднесите нос. Аромат бьёт сразу или его приходится искать?"
               options={INTENSITY_5}
               optionLabels={Object.fromEntries(
                 INTENSITY_5.map((k) => [k, tIntensity(k)])
@@ -318,6 +320,7 @@ export function SatCard({
             </div>
             <ScaleSlider
               label="Сладость"
+              hint="Кончик языка первым ловит сахар. Есть сладость или вино сухое?"
               options={SWEETNESS}
               optionLabels={Object.fromEntries(
                 SWEETNESS.map((k) => [k, tSweet(k)])
@@ -329,6 +332,7 @@ export function SatCard({
             />
             <ScaleSlider
               label="Кислотность"
+              hint="Сглотните и подождите пару секунд. Чем сильнее набегает слюна — тем выше кислотность."
               options={LEVEL_5}
               optionLabels={Object.fromEntries(
                 LEVEL_5.map((k) => [k, tLevel(k)])
@@ -341,6 +345,7 @@ export function SatCard({
             {wineType === "red" && (
               <ScaleSlider
                 label="Танины"
+                hint="Проведите языком по дёснам и зубам. Вяжущая, стягивающая сухость — это танины."
                 options={LEVEL_5}
                 optionLabels={Object.fromEntries(
                   LEVEL_5.map((k) => [k, tLevel(k)])
@@ -353,6 +358,7 @@ export function SatCard({
             )}
             <ScaleSlider
               label="Тельность"
+              hint="Вес вина во рту: лёгкое как вода, среднее как молоко или плотное как сливки?"
               options={BODY}
               optionLabels={Object.fromEntries(
                 BODY.map((k) => [k, tBody(k)])
@@ -362,6 +368,7 @@ export function SatCard({
             />
             <ScaleSlider
               label="Послевкусие"
+              hint="Сглотните и считайте секунды, пока держится вкус. Дольше — длиннее послевкусие."
               options={FINISH}
               optionLabels={Object.fromEntries(
                 FINISH.map((k) => [k, tFinish(k)])
@@ -382,6 +389,7 @@ export function SatCard({
             </div>
             <ScaleSlider
               label="Качество"
+              hint="Общее впечатление: насколько вино сбалансировано, длинно, насыщенно и сложно."
               options={QUALITY}
               optionLabels={Object.fromEntries(
                 QUALITY.map((k) => [k, tQuality(k)])
@@ -393,6 +401,7 @@ export function SatCard({
             />
             <ScaleSlider
               label="Готовность пить"
+              hint="По свежести и фруктовости: пить рано, в самый раз сейчас или уже поздно."
               options={READINESS}
               optionLabels={Object.fromEntries(
                 READINESS.map((k) => [k, tReadiness(k)])
