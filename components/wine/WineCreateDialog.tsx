@@ -255,7 +255,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
                       key={g.id}
                       type="button"
                       onClick={() => setGrapes(grapes.filter((x) => x.id !== g.id))}
-                      className="px-3 py-1 rounded-full text-xs font-display italic bg-bordeaux/20 border border-bordeaux/50 text-foreground hover:bg-bordeaux/30 transition-colors"
+                      className="px-3.5 min-h-9 inline-flex items-center rounded-full text-sm font-display italic bg-bordeaux/20 border border-bordeaux/50 text-foreground hover:bg-bordeaux/30 transition-colors active:scale-95"
                     >
                       {g.name} <span className="text-muted ml-0.5">×</span>
                     </button>

@@ -97,7 +97,7 @@ export function DescriptorPicker({
       </div>
 
       {selected.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-3">
+        <div className="flex flex-wrap gap-2 mb-3">
           {selected.map((s) => {
             const d = selectedById.get(s);
             return (
@@ -105,9 +105,9 @@ export function DescriptorPicker({
                 key={s}
                 type="button"
                 onClick={() => toggle(s)}
-                className="px-3 py-1 rounded-full text-xs font-display italic bg-bordeaux/20 border border-bordeaux/50 text-foreground hover:bg-bordeaux/30 transition-colors active:scale-95"
+                className="px-3.5 min-h-9 inline-flex items-center rounded-full text-sm font-display italic bg-bordeaux/20 border border-bordeaux/50 text-foreground hover:bg-bordeaux/30 transition-colors active:scale-95"
               >
-                {d?.label_ru ?? s} <span className="text-muted ml-0.5">×</span>
+                {d?.label_ru ?? s} <span className="text-muted ml-1">×</span>
               </button>
             );
           })}
@@ -202,14 +202,14 @@ export function DescriptorPicker({
                   <div className="smallcaps text-[10px] text-muted mb-2 rule-left">
                     {family}
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {items.map((d) => (
                       <button
                         key={d.id}
                         type="button"
                         onClick={() => toggle(d.label_en)}
                         className={cn(
-                          "px-3 min-h-9 rounded-full text-xs font-display italic transition-colors active:scale-95",
+                          "px-4 min-h-10 inline-flex items-center rounded-full text-sm font-display italic transition-colors active:scale-95",
                           selected.includes(d.label_en)
                             ? "bg-bordeaux text-cream border border-bordeaux"
                             : "bg-background border border-border text-foreground/85 hover:border-gold"

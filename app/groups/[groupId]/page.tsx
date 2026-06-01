@@ -46,7 +46,7 @@ export default async function GroupPage({ params }: { params: Params }) {
   const sessionCount = sessions?.length ?? 0;
 
   return (
-    <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 w-full wine-vignette">
+    <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 pb-28 md:pb-16 w-full wine-vignette">
       {/* Hero */}
       <header className="mb-12 sm:mb-16 anim-fade-up">
         <p className="smallcaps text-xs text-gold mb-3">Дневник дегустаций</p>
@@ -78,11 +78,13 @@ export default async function GroupPage({ params }: { params: Params }) {
             ))}
           </div>
         </div>
+        {/* Desktop / tablet: inline CTA. On phones it lives in a fixed
+            bottom bar (below) for thumb reach. */}
         <Link
           href="/sessions/new"
-          className="btn-seal h-12 px-7 rounded-full inline-flex items-center justify-center gap-2 self-start md:self-end w-full md:w-auto"
+          className="btn-seal h-12 px-7 rounded-full hidden md:inline-flex items-center justify-center gap-2 self-end"
         >
-                    <span>Новый вечер</span>
+          <span>Новый вечер</span>
         </Link>
       </section>
 
@@ -162,6 +164,19 @@ export default async function GroupPage({ params }: { params: Params }) {
           </div>
         )}
       </section>
+
+      {/* Phone-only fixed CTA — thumb reach. Only when there are sessions
+          (the empty state already shows its own prominent button). */}
+      {sessions && sessions.length > 0 && (
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-40 px-5 pt-3 pb-safe bg-background border-t border-border shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.5)]">
+          <Link
+            href="/sessions/new"
+            className="btn-seal h-12 w-full rounded-full inline-flex items-center justify-center gap-2"
+          >
+            <span>Новый вечер</span>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

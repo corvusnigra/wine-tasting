@@ -67,6 +67,13 @@ html {
   text-rendering: optimizeLegibility;
 }
 
+/* Never allow horizontal page scroll on phones — content must stay within
+   the viewport, never wider than the header/footer. */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -303,6 +310,26 @@ h1, h2, h3, h4, .font-display {
   .anim-fade-up, .anim-fade-in {
     animation: none;
   }
+}
+
+/* Skeleton shimmer for perceived performance on flaky networks */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--surface) 30%,
+    var(--surface-2) 50%,
+    var(--surface) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
 }
 
 /* Winner medallion — large Parker-style score */
