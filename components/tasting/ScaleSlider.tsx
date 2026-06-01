@@ -77,7 +77,12 @@ export function ScaleSlider<T extends string>({
                   else itemRefs.current.delete(opt);
                 }}
                 type="button"
-                onClick={() => onChange(opt)}
+                onClick={() => {
+                  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                    navigator.vibrate(8);
+                  }
+                  onChange(opt);
+                }}
                 aria-pressed={selected}
                 className={cn(
                   "snap-center shrink-0 min-h-11 px-4 rounded-full text-sm whitespace-nowrap transition-all duration-200 active:scale-95",

@@ -178,7 +178,7 @@ export function DescriptorPicker({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="яблоко, кожа, ваниль…"
                 autoFocus={false}
-                className="w-full h-11 px-4 rounded-full bg-background border border-border focus:border-gold focus:outline-none text-sm font-display italic placeholder:text-muted/60"
+                className="w-full h-12 px-4 rounded-full bg-background border border-border focus:border-gold focus:outline-none text-base font-display italic placeholder:text-muted/60"
               />
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain px-5 sm:px-8 pb-8">

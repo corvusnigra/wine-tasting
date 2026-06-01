@@ -44,9 +44,10 @@
   --foreground: var(--color-cream);
   --surface: #1c1013;
   --surface-2: #25151a;
-  --border: rgba(242, 233, 216, 0.12);
-  --border-strong: rgba(242, 233, 216, 0.28);
-  --muted: rgba(242, 233, 216, 0.55);
+  --border: rgba(242, 233, 216, 0.14);
+  --border-strong: rgba(242, 233, 216, 0.32);
+  /* Bumped for legibility at arm's length in dim tasting light. */
+  --muted: rgba(242, 233, 216, 0.68);
   --paper-grain: 0.06;
 }
 
@@ -361,6 +362,14 @@ h1, h2, h3, h4, .font-display {
 /* Disable iOS double-tap zoom on interactive elements */
 button, a, [role="button"] {
   touch-action: manipulation;
+}
+
+/* iOS auto-zooms when a focused input's font is < 16px. Enforce a floor
+   on touch devices so focusing search/number fields never jolts the layout. */
+@media (pointer: coarse) {
+  input, textarea, select {
+    font-size: max(16px, 1em);
+  }
 }
 
 /* Editorial monogram badge — wax-seal feel */
