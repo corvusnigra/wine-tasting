@@ -31,8 +31,12 @@ export function DescriptorPicker({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
+  // Load the catalogue when the drawer opens OR when there are already
+  // selected descriptors to translate (e.g. restored from a saved draft) —
+  // otherwise the chips fall back to their English label_en.
   useEffect(() => {
-    if (!open || all.length > 0) return;
+    if (all.length > 0) return;
+    if (!open && selected.length === 0) return;
     setLoading(true);
     setLoadError(null);
     void (async () => {
@@ -48,7 +52,7 @@ export function DescriptorPicker({
       }
       setLoading(false);
     })();
-  }, [open, all.length, supabase]);
+  }, [open, all.length, selected.length, supabase]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return all;
