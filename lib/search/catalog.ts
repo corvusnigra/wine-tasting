@@ -61,27 +61,65 @@ const GRAPE_COLOR_RU: Record<string, string> = {
   red: "красный", white: "белый", rose: "розовый", gray: "серый",
 };
 
+const EMPTY: Catalog = {
+  grapes: [],
+  regions: [],
+  producers: [],
+  wines: [],
+  regionById: new Map(),
+  producerById: new Map(),
+};
+
+async function fetchCatalogOnce(sb: SupabaseClient<Database>): Promise<Catalog> {
+  const [g, r, p, w] = await Promise.all([
+    sb.from("grapes").select("id, name_ru, name_en, color, search_aliases"),
+    sb.from("regions").select("id, name_ru, name_en, country_code, classification, search_aliases"),
+    sb.from("producers").select("id, name, region_id, search_aliases"),
+    sb.from("wines").select("id, name, vintage, wine_type, producer_id, region_id, search_aliases"),
+  ]);
+  // If any query errored (flaky network), throw so the caller can retry —
+  // never cache a half-empty catalogue.
+  if (g.error || r.error || p.error || w.error) {
+    throw new Error(
+      g.error?.message || r.error?.message || p.error?.message || w.error?.message
+    );
+  }
+  const grapes = (g.data ?? []) as GrapeRow[];
+  const regions = (r.data ?? []) as RegionRow[];
+  const producers = (p.data ?? []) as ProducerRow[];
+  const wines = (w.data ?? []) as WineRow[];
+  return {
+    grapes,
+    regions,
+    producers,
+    wines,
+    regionById: new Map(regions.map((x) => [x.id, x])),
+    producerById: new Map(producers.map((x) => [x.id, x])),
+  };
+}
+
 export async function loadCatalog(
   sb: SupabaseClient<Database>
 ): Promise<Catalog> {
   if (cache) return cache;
   if (inflight) return inflight;
   inflight = (async () => {
-    const [g, r, p, w] = await Promise.all([
-      sb.from("grapes").select("id, name_ru, name_en, color, search_aliases"),
-      sb.from("regions").select("id, name_ru, name_en, country_code, classification, search_aliases"),
-      sb.from("producers").select("id, name, region_id, search_aliases"),
-      sb.from("wines").select("id, name, vintage, wine_type, producer_id, region_id, search_aliases"),
-    ]);
-    const grapes = (g.data ?? []) as GrapeRow[];
-    const regions = (r.data ?? []) as RegionRow[];
-    const producers = (p.data ?? []) as ProducerRow[];
-    const wines = (w.data ?? []) as WineRow[];
-    const regionById = new Map(regions.map((x) => [x.id, x]));
-    const producerById = new Map(producers.map((x) => [x.id, x]));
-    cache = { grapes, regions, producers, wines, regionById, producerById };
-    inflight = null;
-    return cache;
+    // Retry a few times — RU↔Frankfurt can drop the odd HTTP/2 connection.
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const result = await fetchCatalogOnce(sb);
+        cache = result;
+        inflight = null;
+        return result;
+      } catch (e) {
+        lastErr = e;
+        await new Promise((res) => setTimeout(res, 400 * (attempt + 1)));
+      }
+    }
+    console.error("loadCatalog failed after retries:", lastErr);
+    inflight = null; // allow a later call to try again
+    return EMPTY; // don't cache the failure
   })();
   return inflight;
 }
