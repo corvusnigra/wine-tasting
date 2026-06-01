@@ -19,9 +19,12 @@ export function SessionLiveRefresher({
 }) {
   const router = useRouter();
   const supabase = useSupabaseBrowser();
+  // Stable primitive key — the parent passes a fresh array on every render,
+  // which would otherwise tear down and rebuild the channel on each refresh.
+  const idsKey = wineInSessionIds.join(",");
 
   useEffect(() => {
-    if (wineInSessionIds.length === 0) return;
+    if (!idsKey) return;
 
     let opened = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -34,7 +37,7 @@ export function SessionLiveRefresher({
           event: "*",
           schema: "public",
           table: "tasting_notes",
-          filter: `wine_in_session_id=in.(${wineInSessionIds.join(",")})`,
+          filter: `wine_in_session_id=in.(${idsKey})`,
         },
         () => router.refresh()
       )
@@ -65,7 +68,7 @@ export function SessionLiveRefresher({
       if (pollTimer) clearInterval(pollTimer);
       void supabase.removeChannel(channel);
     };
-  }, [sessionId, wineInSessionIds, router, supabase]);
+  }, [sessionId, idsKey, router, supabase]);
 
   return null;
 }

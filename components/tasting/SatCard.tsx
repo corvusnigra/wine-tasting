@@ -101,9 +101,14 @@ export function SatCard({
   const [scale, setScale] = useState<Scale>(initialScale);
   const [submitting, setSubmitting] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Snapshot of the draft as it was loaded — used to skip autosave until
+  // the user actually changes something (avoids ghost empty rows on open).
+  const initialSnapshot = useRef(JSON.stringify(initial ?? EMPTY_DRAFT));
 
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
+    // Nothing changed yet → don't create/touch a row just because the card opened.
+    if (JSON.stringify(draft) === initialSnapshot.current) return;
     saveTimer.current = setTimeout(() => void save(false), 800);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);

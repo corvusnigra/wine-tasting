@@ -51,13 +51,13 @@ export default async function SessionPage({ params }: { params: Params }) {
     .select("user_id, role, profiles(display_name)")
     .eq("group_id", session.group_id);
 
-  const { data: notes } = await supabase
-    .from("tasting_notes")
-    .select("wine_in_session_id, user_id, submitted_at")
-    .in(
-      "wine_in_session_id",
-      (winesInSession ?? []).map((w) => w.id)
-    );
+  const wisIds = (winesInSession ?? []).map((w) => w.id);
+  const { data: notes } = wisIds.length
+    ? await supabase
+        .from("tasting_notes")
+        .select("wine_in_session_id, user_id, submitted_at")
+        .in("wine_in_session_id", wisIds)
+    : { data: [] };
 
   // Any group member can share the invite link — not just the host.
   let code: string | null = null;
@@ -72,19 +72,27 @@ export default async function SessionPage({ params }: { params: Params }) {
   const protocol = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
   const inviteUrl = code ? `${protocol}://${host}/invite/${code}` : null;
 
-  const totalMembers = members?.length ?? 0;
   const progressByWine = new Map<string, number>();
+  const participantIds = new Set<string>();
   for (const note of notes ?? []) {
     if (!note.submitted_at) continue;
     progressByWine.set(
       note.wine_in_session_id,
       (progressByWine.get(note.wine_in_session_id) ?? 0) + 1
     );
+    participantIds.add(note.user_id);
   }
 
+  // Reveal readiness is based on people who actually tasted this evening —
+  // not the whole group roster (a group can have 10 members but only 3 attend,
+  // and late joiners shouldn't lock the host out).
+  const participantCount = participantIds.size;
+  const totalMembers = participantCount;
   const allWinesComplete =
-    winesInSession && winesInSession.length > 0 && totalMembers > 0 &&
-    winesInSession.every((w) => (progressByWine.get(w.id) ?? 0) >= totalMembers);
+    !!winesInSession &&
+    winesInSession.length > 0 &&
+    participantCount > 0 &&
+    winesInSession.every((w) => (progressByWine.get(w.id) ?? 0) >= participantCount);
 
   // Track current user's own progress separately for the "вы оценили N из M" line.
   const myCompletedNotes = (notes ?? []).filter(

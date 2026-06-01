@@ -33,12 +33,15 @@ export function aggregateNotes(
     }
   }
 
+  // Outliers: z-score is unreliable for tiny samples (with n=3 roughly a
+  // third of values exceed |z|=1 by chance). Only flag when we have enough
+  // raters, and use a stricter threshold so it means something.
   const outliers: string[] = [];
-  if (mean !== null && std !== null && std > 0) {
+  if (mean !== null && std !== null && std > 0 && scores.length >= 4) {
     for (const n of notes) {
       if (n.overall_score === null) continue;
       const z = (n.overall_score - mean) / std;
-      if (Math.abs(z) > 1) outliers.push(n.user_id);
+      if (Math.abs(z) > 1.5) outliers.push(n.user_id);
     }
   }
 
@@ -101,8 +104,13 @@ export function pickBadges(
         uId = w.id;
       }
     }
-    if (maxStd > 0) result.set(cId, [...(result.get(cId) ?? []), "controversial"]);
-    if (minStd >= 0 && uId === bestId && withStd.length > 1) {
+    // "Controversial" — the wine with the widest spread, but only if the
+    // spread is actually meaningful (not a 1-point difference).
+    if (maxStd >= 8) result.set(cId, [...(result.get(cId) ?? []), "controversial"]);
+    // "Unanimous" — the best wine is also the one everyone agreed on:
+    // it must hold the lowest spread AND that spread must be genuinely tight.
+    const UNANIMOUS_MAX_STD = 5;
+    if (uId === bestId && minStd <= UNANIMOUS_MAX_STD && withStd.length > 1) {
       result.set(uId, [...(result.get(uId) ?? []), "unanimous"]);
     }
   }

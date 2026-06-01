@@ -57,15 +57,15 @@ export default async function RevealPage({ params }: { params: Params }) {
   };
   const wineMeta = (w: { wines: unknown }) => w.wines as WineMeta | null;
 
-  const { data: notesRaw } = await supabase
-    .from("tasting_notes")
-    .select(
-      "wine_in_session_id, user_id, overall_score, nose, palate, conclusion, profiles(display_name)"
-    )
-    .in(
-      "wine_in_session_id",
-      (wines ?? []).map((w) => w.id)
-    );
+  const wineIds = (wines ?? []).map((w) => w.id);
+  const { data: notesRaw } = wineIds.length
+    ? await supabase
+        .from("tasting_notes")
+        .select(
+          "wine_in_session_id, user_id, overall_score, nose, palate, conclusion, profiles(display_name)"
+        )
+        .in("wine_in_session_id", wineIds)
+    : { data: [] };
 
   type NoteRow = {
     wine_in_session_id: string;
