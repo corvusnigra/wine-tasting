@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { writeGuestId } from "@/lib/guest/guest-id";
+import { ensureGuestSession } from "@/lib/guest/ensure-guest";
 
 export function GuestForm({ returnTo = "/" }: { returnTo?: string }) {
   const t = useTranslations("auth.guest");
@@ -18,19 +18,10 @@ export function GuestForm({ returnTo = "/" }: { returnTo?: string }) {
     e.preventDefault();
     setSubmitting(true);
     const supabase = createSupabaseBrowserClient();
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error || !data.user) {
-      toast.error(error?.message || tErr("generic"));
-      setSubmitting(false);
-      return;
-    }
-    writeGuestId(data.user.id);
-    const { error: updErr } = await supabase
-      .from("profiles")
-      .update({ display_name: name.trim() })
-      .eq("id", data.user.id);
-    if (updErr) {
-      toast.error(updErr.message);
+    try {
+      await ensureGuestSession(supabase, name);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : tErr("generic"));
       setSubmitting(false);
       return;
     }

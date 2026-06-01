@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { writeGuestId } from "@/lib/guest/guest-id";
+import { ensureGuestSession } from "@/lib/guest/ensure-guest";
 
 /**
  * Single-tap entry: type a name → anonymous sign-in → ensure group → enter.
@@ -21,20 +21,10 @@ export function QuickEntryForm({ returnTo = "/" }: { returnTo?: string }) {
     setSubmitting(true);
 
     const supabase = createSupabaseBrowserClient();
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error || !data.user) {
-      toast.error(error?.message ?? "Не удалось войти");
-      setSubmitting(false);
-      return;
-    }
-    writeGuestId(data.user.id);
-
-    const { error: updErr } = await supabase
-      .from("profiles")
-      .update({ display_name: name.trim() })
-      .eq("id", data.user.id);
-    if (updErr) {
-      toast.error(updErr.message);
+    try {
+      await ensureGuestSession(supabase, name);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось войти");
       setSubmitting(false);
       return;
     }
