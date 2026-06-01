@@ -7,6 +7,7 @@ import { AgeGate } from "@/components/layout/AgeGate";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
 import { Header } from "@/components/layout/Header";
 import { Providers } from "@/components/layout/Providers";
+import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistrar";
 
 const yeseva = Yeseva_One({
   variable: "--font-yeseva",
@@ -58,6 +59,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <NextIntlClientProvider messages={messages} locale={locale}>
+          <ServiceWorkerRegistrar />
           <Providers>
             <AgeGate>
               <Header />
