@@ -1,15 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { wineTypeRu } from "@/lib/tasting/wine-type";
+import { formatDateNumeric } from "@/lib/utils/date";
 
 type Params = Promise<{ wineId: string }>;
-
-const WINE_TYPE_RU: Record<string, string> = {
-  red: "Красное",
-  white: "Белое",
-  rose: "Розовое",
-  sparkling: "Игристое",
-};
 
 export default async function WinePage({ params }: { params: Params }) {
   const { wineId } = await params;
@@ -56,7 +51,7 @@ export default async function WinePage({ params }: { params: Params }) {
         <div className="text-sm text-muted">
           {[
             wine.vintage,
-            wine.wine_type ? WINE_TYPE_RU[wine.wine_type] : null,
+            wineTypeRu(wine.wine_type),
             wine.producers?.name,
             wine.regions?.name_ru,
           ]
@@ -91,9 +86,7 @@ export default async function WinePage({ params }: { params: Params }) {
                       </div>
                       <div className="text-xs text-muted">
                         {row.tasting_sessions?.session_date &&
-                          new Date(row.tasting_sessions.session_date).toLocaleDateString(
-                            "ru-RU"
-                          )}
+                          formatDateNumeric(row.tasting_sessions.session_date)}
                       </div>
                     </div>
                     {mean !== null && (

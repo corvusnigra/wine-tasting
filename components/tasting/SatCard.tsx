@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { ScaleSlider } from "./ScaleSlider";
 import { DescriptorPicker } from "./DescriptorPicker";
 import {
@@ -94,7 +94,7 @@ export function SatCard({
   const tQuality = useTranslations("sat.quality");
   const tReadiness = useTranslations("sat.readiness");
   const router = useRouter();
-  const supabase = useRef(createSupabaseBrowserClient()).current;
+  const supabase = useSupabaseBrowser();
 
   const [step, setStep] = useState<StepKey>("appearance");
   const [draft, setDraft] = useState<DraftNote>(initial ?? EMPTY_DRAFT);

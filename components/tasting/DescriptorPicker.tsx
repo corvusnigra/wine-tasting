@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Drawer } from "vaul";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { normalizeQuery } from "@/lib/search/normalize";
 import { cn } from "@/lib/utils/cn";
 
@@ -24,7 +24,7 @@ export function DescriptorPicker({
   onChange: (next: string[]) => void;
   label?: string;
 }) {
-  const supabase = useRef(createSupabaseBrowserClient()).current;
+  const supabase = useSupabaseBrowser();
   const [open, setOpen] = useState(false);
   const [all, setAll] = useState<Descriptor[]>([]);
   const [query, setQuery] = useState("");
@@ -128,13 +128,24 @@ export function DescriptorPicker({
           >
             <div
               aria-hidden
-              className="mx-auto my-3 w-12 h-1.5 rounded-full bg-border-strong shrink-0"
+              className="mx-auto mt-3 mb-2 w-14 h-1.5 rounded-full bg-border-strong shrink-0"
             />
-            <div className="px-5 sm:px-8 pb-3 shrink-0">
-              <p className="smallcaps text-[10px] text-gold mb-1">палитра ароматов</p>
-              <Drawer.Title className="font-display italic text-2xl">
-                {selected.length > 0 ? `Выбрано: ${selected.length}` : "Что улавливаете?"}
-              </Drawer.Title>
+            <div className="px-5 sm:px-8 pb-3 shrink-0 flex items-end justify-between gap-3">
+              <div>
+                <p className="smallcaps text-[10px] text-gold mb-1">палитра ароматов</p>
+                <Drawer.Title className="font-display italic text-2xl">
+                  {selected.length > 0 ? `Выбрано: ${selected.length}` : "Что улавливаете?"}
+                </Drawer.Title>
+              </div>
+              {selected.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onChange([])}
+                  className="smallcaps text-[10px] text-muted hover:text-rust transition-colors shrink-0 pb-1"
+                >
+                  очистить всё
+                </button>
+              )}
             </div>
             <div className="px-5 sm:px-8 pb-3 shrink-0">
               <input

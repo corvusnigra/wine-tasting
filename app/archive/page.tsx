@@ -1,13 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-const WINE_TYPE_RU: Record<string, string> = {
-  red: "Красное",
-  white: "Белое",
-  rose: "Розовое",
-  sparkling: "Игристое",
-};
+import { wineTypeRu } from "@/lib/tasting/wine-type";
+import { formatDateNumeric } from "@/lib/utils/date";
 
 export default async function ArchivePage() {
   const supabase = await createSupabaseServerClient();
@@ -37,7 +32,7 @@ export default async function ArchivePage() {
                 <div className="flex items-baseline justify-between gap-3 mb-2">
                   <h2 className="font-display text-xl">{s.title}</h2>
                   <span className="text-xs text-muted shrink-0">
-                    {new Date(s.session_date).toLocaleDateString("ru-RU")}
+                    {formatDateNumeric(s.session_date)}
                   </span>
                 </div>
                 <ul className="flex flex-wrap gap-2">
@@ -50,9 +45,9 @@ export default async function ArchivePage() {
                       >
                         {w.wines?.name}
                         {w.wines?.vintage && ` · ${w.wines.vintage}`}
-                        {w.wines?.wine_type && (
+                        {wineTypeRu(w.wines?.wine_type) && (
                           <span className="text-muted ml-1">
-                            · {WINE_TYPE_RU[w.wines.wine_type]}
+                            · {wineTypeRu(w.wines?.wine_type)}
                           </span>
                         )}
                       </li>

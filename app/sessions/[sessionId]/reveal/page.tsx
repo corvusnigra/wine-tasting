@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { RevealConfetti } from "@/components/session/RevealConfetti";
+import { wineTypeRu } from "@/lib/tasting/wine-type";
+import { formatDateLong } from "@/lib/utils/date";
 import {
   aggregateNotes,
   pickBadges,
@@ -16,19 +18,6 @@ const BADGE_LABEL: Record<Badge, string> = {
   best: "лучшее по среднему",
   controversial: "самое спорное",
   unanimous: "единогласно лучшее",
-};
-
-const BADGE_GLYPH: Record<Badge, string> = {
-  best: "·",
-  controversial: "✧",
-  unanimous: "✶",
-};
-
-const WINE_TYPE_RU: Record<string, string> = {
-  red: "красное",
-  white: "белое",
-  rose: "розовое",
-  sparkling: "игристое",
 };
 
 export default async function RevealPage({ params }: { params: Params }) {
@@ -52,9 +41,21 @@ export default async function RevealPage({ params }: { params: Params }) {
 
   const { data: wines } = await supabase
     .from("wines_in_session")
-    .select("id, position, revealed, wines(id, name, vintage, wine_type)")
+    .select(
+      "id, position, revealed, wines(id, name, vintage, wine_type, producers(name), regions(name_ru))"
+    )
     .eq("session_id", sessionId)
     .order("position", { ascending: true });
+
+  type WineMeta = {
+    id: string;
+    name: string;
+    vintage: number | null;
+    wine_type: string;
+    producers: { name: string } | null;
+    regions: { name_ru: string } | null;
+  };
+  const wineMeta = (w: { wines: unknown }) => w.wines as WineMeta | null;
 
   const { data: notesRaw } = await supabase
     .from("tasting_notes")
@@ -133,21 +134,18 @@ export default async function RevealPage({ params }: { params: Params }) {
         <h1 className="font-display italic text-4xl sm:text-5xl md:text-6xl leading-[0.95] mb-2 break-words">
           {session.title}
         </h1>
-        <p className="text-muted italic">
-          {new Date(session.session_date).toLocaleDateString("ru-RU", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
+        <p className="text-muted italic">{formatDateLong(session.session_date)}</p>
       </header>
 
       {/* Winner — theatrical */}
       {winner && (() => {
-        const wine = winner.wines;
+        const wine = wineMeta(winner);
         const agg = aggByWine.get(winner.id);
         const wineBadges = badges.get(winner.id) ?? [];
         const wineNotes = fullNotesByWine.get(winner.id) ?? [];
+        const sub = [wine?.producers?.name, wine?.regions?.name_ru]
+          .filter(Boolean)
+          .join(" · ");
         return (
           <section
             key={winner.id}
@@ -167,24 +165,29 @@ export default async function RevealPage({ params }: { params: Params }) {
             </div>
 
             <div className="flex flex-col items-center text-center">
-              <p className="editorial-num text-2xl text-gold-soft mb-2">
-                {String(winner.position).padStart(2, "0")}
-              </p>
               <h2 className="font-display text-3xl sm:text-5xl mb-2 break-words">
                 {wine?.name}
               </h2>
-              <p className="text-sm text-muted italic mb-6">
-                {[wine?.vintage, wine?.wine_type ? WINE_TYPE_RU[wine.wine_type] : null]
+              <p className="text-sm text-muted italic mb-1">
+                {[wine?.vintage, wineTypeRu(wine?.wine_type)]
                   .filter(Boolean)
                   .join(" · ")}
               </p>
+              {sub && (
+                <p className="font-display italic text-base text-foreground/70 mb-6">
+                  {sub}
+                </p>
+              )}
 
               {agg?.mean !== null && agg?.mean !== undefined && (
-                <div className="medallion mb-6">
+                <div className="medallion mb-3">
                   <span className="num">{Math.round(agg.mean)}</span>
                   <span className="unit">/100</span>
                 </div>
               )}
+              <p className="smallcaps text-[10px] text-muted mb-6">
+                место 1 из {ranked.length}
+              </p>
 
               {wineBadges.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-2 mb-6">
@@ -193,7 +196,6 @@ export default async function RevealPage({ params }: { params: Params }) {
                       key={b}
                       className="smallcaps text-[10px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gold/40 text-gold"
                     >
-                      <span aria-hidden>{BADGE_GLYPH[b]}</span>
                       {BADGE_LABEL[b]}
                     </span>
                   ))}
@@ -262,7 +264,7 @@ export default async function RevealPage({ params }: { params: Params }) {
       {/* Others — restrained list */}
       <div className="flex flex-col gap-10">
         {others.map((w, idx) => {
-          const wine = w.wines;
+          const wine = wineMeta(w);
           const agg = aggByWine.get(w.id);
           const wineBadges = badges.get(w.id) ?? [];
           const wineNotes = fullNotesByWine.get(w.id) ?? [];
@@ -280,18 +282,27 @@ export default async function RevealPage({ params }: { params: Params }) {
                 <h2 className="font-display text-xl sm:text-2xl mb-1 break-words">
                   {wine?.name}
                 </h2>
-                <p className="text-sm text-muted italic mb-3">
-                  {[wine?.vintage, wine?.wine_type ? WINE_TYPE_RU[wine.wine_type] : null]
+                <p className="text-sm text-muted italic mb-1">
+                  {[wine?.vintage, wineTypeRu(wine?.wine_type)]
                     .filter(Boolean)
                     .join(" · ")}
                 </p>
+                {(wine?.producers?.name || wine?.regions?.name_ru) && (
+                  <p className="font-display italic text-sm text-foreground/65 mb-3">
+                    {[wine?.producers?.name, wine?.regions?.name_ru]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
 
                 {agg?.mean !== null && agg?.mean !== undefined && (
                   <div className="flex items-baseline gap-2 mb-3">
                     <span className="score-mark text-3xl">
                       {Math.round(agg.mean)}
                     </span>
-                    <span className="smallcaps text-[10px] text-muted">/100</span>
+                    <span className="smallcaps text-[10px] text-muted">
+                      /100 · место {idx + 2} из {ranked.length}
+                    </span>
                   </div>
                 )}
 
@@ -302,7 +313,6 @@ export default async function RevealPage({ params }: { params: Params }) {
                         key={b}
                         className="smallcaps text-[10px] inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-gold/40 text-gold"
                       >
-                        <span aria-hidden>{BADGE_GLYPH[b]}</span>
                         {BADGE_LABEL[b]}
                       </span>
                     ))}

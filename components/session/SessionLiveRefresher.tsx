@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 
 /**
  * Subscribes to tasting_notes changes for a session and calls
@@ -18,7 +18,7 @@ export function SessionLiveRefresher({
   wineInSessionIds: string[];
 }) {
   const router = useRouter();
-  const supabase = useRef(createSupabaseBrowserClient()).current;
+  const supabase = useSupabaseBrowser();
 
   useEffect(() => {
     if (wineInSessionIds.length === 0) return;

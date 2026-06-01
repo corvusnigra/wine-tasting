@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { searchEntities, type EntityType, type SearchHit } from "@/lib/search/api";
 import { cn } from "@/lib/utils/cn";
 
@@ -32,7 +32,7 @@ export function EntityAutocomplete({
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const supabase = useRef(createSupabaseBrowserClient()).current;
+  const supabase = useSupabaseBrowser();
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {

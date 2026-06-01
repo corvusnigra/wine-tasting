@@ -7,15 +7,10 @@ import { ensureGroupInvite } from "@/lib/groups/ensure-group-invite";
 import { RevealButton } from "@/components/session/RevealButton";
 import { SessionLiveRefresher } from "@/components/session/SessionLiveRefresher";
 import { Avatar } from "@/components/layout/Avatar";
+import { wineTypeRu } from "@/lib/tasting/wine-type";
+import { formatDateLong } from "@/lib/utils/date";
 
 type Params = Promise<{ sessionId: string }>;
-
-const WINE_TYPE_RU: Record<string, string> = {
-  red: "красное",
-  white: "белое",
-  rose: "розовое",
-  sparkling: "игристое",
-};
 
 export default async function SessionPage({ params }: { params: Params }) {
   const { sessionId } = await params;
@@ -64,9 +59,13 @@ export default async function SessionPage({ params }: { params: Params }) {
       (winesInSession ?? []).map((w) => w.id)
     );
 
-  const code = isHost
-    ? await ensureGroupInvite(supabase, session.group_id, userId)
-    : null;
+  // Any group member can share the invite link — not just the host.
+  let code: string | null = null;
+  try {
+    code = await ensureGroupInvite(supabase, session.group_id, userId);
+  } catch {
+    code = null;
+  }
 
   const hdrs = await headers();
   const host = hdrs.get("host") ?? "localhost:3000";
@@ -110,11 +109,7 @@ export default async function SessionPage({ params }: { params: Params }) {
       {/* Hero */}
       <header className="mb-8 sm:mb-10 anim-fade-up">
         <p className="smallcaps text-xs text-gold mb-3">
-          {sessionDate.toLocaleDateString("ru-RU", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
+          {formatDateLong(sessionDate)}
         </p>
         <h1 className="font-display italic text-4xl sm:text-5xl md:text-6xl leading-[0.95] break-words">
           {session.title}
@@ -148,7 +143,7 @@ export default async function SessionPage({ params }: { params: Params }) {
         </div>
       )}
 
-      {isHost && inviteUrl && (
+      {inviteUrl && (
         <section className="mb-14">
           <h2 className="smallcaps text-xs text-muted mb-3 rule-left">Пригласить</h2>
           <InviteShare inviteUrl={inviteUrl} />
@@ -179,10 +174,7 @@ export default async function SessionPage({ params }: { params: Params }) {
                       {wine?.name ?? "—"}
                     </h3>
                     <p className="text-sm text-muted italic mt-1">
-                      {[
-                        wine?.vintage,
-                        wine?.wine_type ? WINE_TYPE_RU[wine.wine_type] : null,
-                      ]
+                      {[wine?.vintage, wineTypeRu(wine?.wine_type)]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>

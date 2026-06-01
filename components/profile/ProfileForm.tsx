@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 
 type Scale = "5stars" | "20pt";
 
@@ -17,7 +17,7 @@ export function ProfileForm({
   email: string | null;
 }) {
   const router = useRouter();
-  const supabase = useRef(createSupabaseBrowserClient()).current;
+  const supabase = useSupabaseBrowser();
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [scale, setScale] = useState<Scale>(initialScale);
   const [saving, setSaving] = useState(false);

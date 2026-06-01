@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/layout/Avatar";
+import { formatDateShort } from "@/lib/utils/date";
 
 type Params = Promise<{ groupId: string }>;
 
@@ -115,7 +116,7 @@ export default async function GroupPage({ params }: { params: Params }) {
                         {String(sessions.length - idx).padStart(2, "0")}
                       </div>
                       <div className="smallcaps text-[10px] text-muted mt-1">
-                        {date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+                        {formatDateShort(date)}
                       </div>
                     </div>
                     <div className="min-w-0">

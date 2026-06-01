@@ -246,6 +246,13 @@ h1, h2, h3, h4, .font-display {
   opacity: 0.45;
   transform: none;
 }
+/* Leading gold hairline mark — editorial density without an emoji */
+.btn-seal > span:first-child::before {
+  content: "·";
+  color: var(--color-gold-light);
+  margin-right: 0.5em;
+  font-weight: 700;
+}
 
 /* Ghost button */
 .btn-ghost {

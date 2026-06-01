@@ -4,7 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { EntityAutocomplete } from "./EntityAutocomplete";
 import type { SearchHit } from "@/lib/search/api";
 
@@ -27,7 +27,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
   const t = useTranslations("wine.create");
   const tType = useTranslations("wine.type");
   const tActions = useTranslations("actions");
-  const supabase = useRef(createSupabaseBrowserClient()).current;
+  const supabase = useSupabaseBrowser();
 
   const [name, setName] = useState("");
   const [producer, setProducer] = useState<SearchHit | null>(null);

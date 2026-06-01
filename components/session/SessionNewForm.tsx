@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { EntityAutocomplete } from "@/components/wine/EntityAutocomplete";
 import { WineCreateDialog, type CreatedWine } from "@/components/wine/WineCreateDialog";
 import { SortableWineList, type WineRef } from "./SortableWineList";
@@ -22,7 +22,7 @@ export function SessionNewForm({ groupId }: { groupId: string }) {
   const t = useTranslations("session.create");
   const tActions = useTranslations("actions");
   const router = useRouter();
-  const supabase = useRef(createSupabaseBrowserClient()).current;
+  const supabase = useSupabaseBrowser();
 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
