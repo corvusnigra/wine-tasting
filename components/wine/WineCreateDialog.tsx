@@ -1,16 +1,25 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { EntityAutocomplete } from "./EntityAutocomplete";
+import { regionHitFor } from "@/lib/search/catalog";
+import { normalizeQuery } from "@/lib/search/normalize";
 import type { SearchHit } from "@/lib/search/api";
 
 type WineType = "red" | "white" | "rose" | "sparkling";
 
 export type CreatedWine = {
+  id: string;
+  name: string;
+  vintage: number | null;
+  wine_type: WineType;
+};
+
+type ProducerWine = {
   id: string;
   name: string;
   vintage: number | null;
@@ -38,6 +47,11 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
   const [wineType, setWineType] = useState<WineType>("red");
   const [submitting, setSubmitting] = useState(false);
 
+  // Existing wines of the chosen producer — to suggest in the name field
+  // and avoid creating duplicates.
+  const [producerWines, setProducerWines] = useState<ProducerWine[]>([]);
+  const [nameFocused, setNameFocused] = useState(false);
+
   useEffect(() => {
     if (!open) {
       setName("");
@@ -47,8 +61,39 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
       setVintage("");
       setAbv("");
       setWineType("red");
+      setProducerWines([]);
     }
   }, [open]);
+
+  // When a producer is picked: auto-fill its region + load its existing wines.
+  async function onProducerSelect(hit: SearchHit) {
+    setProducer(hit);
+    const regionId = hit.meta?.region_id as string | null | undefined;
+    const rhit = await regionHitFor(supabase, regionId);
+    if (rhit) setRegion(rhit);
+
+    const { data } = await supabase
+      .from("wines")
+      .select("id, name, vintage, wine_type")
+      .eq("producer_id", hit.id)
+      .order("name", { ascending: true });
+    setProducerWines((data ?? []) as ProducerWine[]);
+  }
+
+  const nameSuggestions = useMemo(() => {
+    if (producerWines.length === 0) return [];
+    const nq = normalizeQuery(name);
+    if (!nq) return producerWines.slice(0, 8);
+    return producerWines
+      .filter((w) => normalizeQuery(w.name).includes(nq))
+      .slice(0, 8);
+  }, [producerWines, name]);
+
+  function useExisting(w: ProducerWine) {
+    toast.success(`«${w.name}» уже в каталоге — добавлено`);
+    onCreated(w);
+    onClose();
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -110,7 +155,22 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
               <span className="text-xs">·</span>
             </div>
 
+            {/* Producer first — it drives region + name suggestions */}
             <div>
+              <label className="smallcaps text-[10px] text-muted block mb-1.5">
+                {t("producer")}
+              </label>
+              <EntityAutocomplete
+                entityType="producer"
+                value={producer}
+                onSelect={onProducerSelect}
+                variant="underline"
+                placeholder="Antinori, Абрау-Дюрсо …"
+              />
+            </div>
+
+            {/* Name — suggests the producer's existing wines */}
+            <div className="relative">
               <label className="smallcaps text-[10px] text-muted block mb-1.5">
                 {t("name")}
               </label>
@@ -119,29 +179,47 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
                 maxLength={120}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Barolo, Saperavi Khareba …"
+                onFocus={() => setNameFocused(true)}
+                onBlur={() => setTimeout(() => setNameFocused(false), 150)}
+                placeholder={
+                  producer ? "Название вина этого хозяйства" : "Barolo, Brut Reserve …"
+                }
                 className="input-underline text-xl"
               />
+              {nameFocused && nameSuggestions.length > 0 && (
+                <div className="absolute z-20 left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto bg-surface border border-border rounded-2xl shadow-xl py-2">
+                  <p className="px-4 py-1 smallcaps text-[10px] text-muted">
+                    уже у этого производителя
+                  </p>
+                  {nameSuggestions.map((w) => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => useExisting(w)}
+                      className="w-full text-left px-4 py-2 hover:bg-bordeaux/10 transition-colors"
+                    >
+                      <span className="font-display">{w.name}</span>
+                      {w.vintage && (
+                        <span className="text-xs text-muted italic ml-2">{w.vintage}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div>
-              <label className="smallcaps text-[10px] text-muted block mb-1.5">
-                {t("producer")}
-              </label>
-              <EntityAutocomplete
-                entityType="producer"
-                value={producer}
-                onSelect={setProducer}
-                variant="underline"
-                placeholder="Antinori, Абрау-Дюрсо …"
-              />
-            </div>
-
+            {/* Region — auto-filled from producer, still editable */}
             <div>
               <label className="smallcaps text-[10px] text-muted block mb-1.5">
                 {t("region")}
+                {region && producer && (
+                  <span className="text-gold ml-2 normal-case tracking-normal">
+                    подставлен автоматически
+                  </span>
+                )}
               </label>
               <EntityAutocomplete
+                key={region?.id ?? "no-region"}
                 entityType="region"
                 value={region}
                 onSelect={setRegion}

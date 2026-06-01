@@ -76,6 +76,28 @@ function blob(parts: Array<string | null | undefined>): string {
   return normalizeQuery(parts.filter(Boolean).join(" "));
 }
 
+/** Build a region SearchHit from a producer's region_id (for auto-fill). */
+export async function regionHitFor(
+  sb: SupabaseClient<Database>,
+  regionId: string | null | undefined
+): Promise<SearchHit | null> {
+  if (!regionId) return null;
+  const catalog = await loadCatalog(sb);
+  const r = catalog.regionById.get(regionId);
+  if (!r) return null;
+  return {
+    id: r.id,
+    entity_type: "region",
+    name: r.name_ru,
+    meta: {
+      name_en: r.name_en,
+      country_code: r.country_code,
+      classification: r.classification,
+    },
+    rank: 1,
+  };
+}
+
 /** Rank: prefix 3, word-boundary 2, substring 1, none 0. */
 function score(haystack: string, nq: string): number {
   if (!haystack.includes(nq)) return 0;
