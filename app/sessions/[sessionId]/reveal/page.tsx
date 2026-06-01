@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { RevealConfetti } from "@/components/session/RevealConfetti";
 import { wineTypeRu } from "@/lib/tasting/wine-type";
 import { formatDateLong } from "@/lib/utils/date";
 import {
   aggregateNotes,
+  modeOf,
   pickBadges,
   type Badge,
   type SimpleNote,
@@ -62,7 +64,7 @@ export default async function RevealPage({ params }: { params: Params }) {
     ? await supabase
         .from("tasting_notes")
         .select(
-          "wine_in_session_id, user_id, overall_score, nose, palate, conclusion, profiles(display_name)"
+          "wine_in_session_id, user_id, overall_score, appearance, nose, palate, conclusion, profiles(display_name)"
         )
         .in("wine_in_session_id", wineIds)
     : { data: [] };
@@ -71,12 +73,71 @@ export default async function RevealPage({ params }: { params: Params }) {
     wine_in_session_id: string;
     user_id: string;
     overall_score: number | null;
-    nose: { descriptors?: string[] } | null;
-    palate: { flavor_descriptors?: string[] } | null;
-    conclusion: { free_text?: string; quality?: string } | null;
+    appearance: { intensity?: string; color?: string } | null;
+    nose: { intensity?: string; descriptors?: string[] } | null;
+    palate: {
+      sweetness?: string;
+      acidity?: string;
+      tannin?: string;
+      body?: string;
+      finish?: string;
+      flavor_descriptors?: string[];
+    } | null;
+    conclusion: { free_text?: string; quality?: string; readiness?: string } | null;
     profiles: { display_name: string | null } | null;
   };
   const notes = (notesRaw ?? []) as unknown as NoteRow[];
+
+  // Descriptor labels are stored as English canon (label_en) — map to RU.
+  const { data: descRows } = await supabase
+    .from("descriptors")
+    .select("label_en, label_ru");
+  const descRu = new Map<string, string>(
+    (descRows ?? []).map((d) => [d.label_en, d.label_ru])
+  );
+  const ruDesc = (label: string) => descRu.get(label) ?? label;
+
+  // Translators for the aggregated SAT profile.
+  const tIntensity = await getTranslations("sat.intensity");
+  const tLevel = await getTranslations("sat.level");
+  const tSweet = await getTranslations("sat.sweetness");
+  const tBody = await getTranslations("sat.body");
+  const tFinish = await getTranslations("sat.finish");
+  const tQuality = await getTranslations("sat.quality");
+  const tReadiness = await getTranslations("sat.readiness");
+  const safe = (fn: (k: string) => string, v: string | null) => {
+    if (!v) return null;
+    try {
+      return fn(v);
+    } catch {
+      return v;
+    }
+  };
+
+  type ProfileRow = { label: string; value: string };
+  function buildProfile(rows: NoteRow[], wineType: string | undefined): ProfileRow[] {
+    if (rows.length === 0) return [];
+    const out: ProfileRow[] = [];
+    const push = (
+      label: string,
+      raw: string | null,
+      fn: (k: string) => string
+    ) => {
+      const t = safe(fn, raw);
+      if (t) out.push({ label, value: t });
+    };
+    push("Цвет", modeOf(rows.map((r) => r.appearance?.intensity)), tIntensity);
+    push("Аромат", modeOf(rows.map((r) => r.nose?.intensity)), tIntensity);
+    push("Сладость", modeOf(rows.map((r) => r.palate?.sweetness)), tSweet);
+    push("Кислотность", modeOf(rows.map((r) => r.palate?.acidity)), tLevel);
+    if (wineType === "red")
+      push("Танины", modeOf(rows.map((r) => r.palate?.tannin)), tLevel);
+    push("Тельность", modeOf(rows.map((r) => r.palate?.body)), tBody);
+    push("Послевкусие", modeOf(rows.map((r) => r.palate?.finish)), tFinish);
+    push("Качество", modeOf(rows.map((r) => r.conclusion?.quality)), tQuality);
+    push("Зрелость", modeOf(rows.map((r) => r.conclusion?.readiness)), tReadiness);
+    return out;
+  }
 
   const notesByWine = new Map<string, SimpleNote[]>();
   const fullNotesByWine = new Map<string, NoteRow[]>();
@@ -89,7 +150,7 @@ export default async function RevealPage({ params }: { params: Params }) {
       descriptors: [
         ...(n.nose?.descriptors ?? []),
         ...(n.palate?.flavor_descriptors ?? []),
-      ],
+      ].map(ruDesc),
     });
     notesByWine.set(n.wine_in_session_id, arr);
 
@@ -209,8 +270,27 @@ export default async function RevealPage({ params }: { params: Params }) {
               )}
             </div>
 
+            {(() => {
+              const profile = buildProfile(wineNotes, wine?.wine_type);
+              if (profile.length === 0) return null;
+              return (
+                <dl className="max-w-md mx-auto grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 mt-2 mb-2">
+                  {profile.map((row) => (
+                    <div key={row.label} className="text-center">
+                      <dt className="smallcaps text-[10px] text-muted mb-0.5">
+                        {row.label}
+                      </dt>
+                      <dd className="font-display italic text-base text-foreground">
+                        {row.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              );
+            })()}
+
             {wineNotes.length > 0 && (
-              <details className="mt-2 group max-w-xl mx-auto">
+              <details className="mt-6 group max-w-xl mx-auto">
                 <summary className="smallcaps text-xs text-gold hover:text-gold-light cursor-pointer inline-flex items-center gap-2 list-none">
                   <span className="group-open:rotate-90 transition-transform inline-block">›</span>
                   Заметки участников · {wineNotes.length}
@@ -324,6 +404,25 @@ export default async function RevealPage({ params }: { params: Params }) {
                     {agg.topDescriptors.map((d) => d.label).join(" · ")}
                   </p>
                 )}
+
+                {(() => {
+                  const profile = buildProfile(wineNotes, wine?.wine_type);
+                  if (profile.length === 0) return null;
+                  return (
+                    <dl className="flex flex-wrap gap-x-5 gap-y-1.5 mb-3">
+                      {profile.map((row) => (
+                        <div key={row.label} className="flex items-baseline gap-1.5">
+                          <dt className="smallcaps text-[10px] text-muted">
+                            {row.label}
+                          </dt>
+                          <dd className="font-display italic text-sm text-foreground/85">
+                            {row.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  );
+                })()}
 
                 {wineNotes.length > 0 && (
                   <details className="mt-2 group">

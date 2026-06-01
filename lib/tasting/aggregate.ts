@@ -59,6 +59,23 @@ export function aggregateNotes(
   return { mean, std, outliers, topDescriptors };
 }
 
+/** Most frequent non-empty value (ties → first seen). For ordinal SAT fields. */
+export function modeOf(values: Array<string | null | undefined>): string | null {
+  const counts = new Map<string, number>();
+  let best: string | null = null;
+  let bestN = 0;
+  for (const v of values) {
+    if (!v) continue;
+    const n = (counts.get(v) ?? 0) + 1;
+    counts.set(v, n);
+    if (n > bestN) {
+      bestN = n;
+      best = v;
+    }
+  }
+  return best;
+}
+
 export type Badge = "best" | "controversial" | "unanimous";
 
 export function pickBadges(
