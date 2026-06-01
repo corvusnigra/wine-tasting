@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { searchEntities, type EntityType, type SearchHit } from "@/lib/search/api";
+import { loadCatalog, filterCatalog } from "@/lib/search/catalog";
 import { cn } from "@/lib/utils/cn";
+
+type RichHit = SearchHit & { subtitle?: string | null };
 
 type Props = {
   entityType: EntityType;
@@ -27,12 +30,16 @@ export function EntityAutocomplete({
 }: Props) {
   const t = useTranslations("actions");
   const [query, setQuery] = useState(value?.name ?? "");
-  const [results, setResults] = useState<SearchHit[]>([]);
+  const [results, setResults] = useState<RichHit[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const supabase = useSupabaseBrowser();
+
+  // Bounded reference tables are searched locally (instant, offline-friendly).
+  // Only the unbounded wines table goes through the server RPC.
+  const isCatalog = entityType !== "wine";
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -44,6 +51,11 @@ export function EntityAutocomplete({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
+  // Warm the catalog cache as soon as a catalog field mounts.
+  useEffect(() => {
+    if (isCatalog) void loadCatalog(supabase);
+  }, [isCatalog, supabase]);
+
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!query.trim()) {
@@ -53,14 +65,19 @@ export function EntityAutocomplete({
     }
     setLoading(true);
     debounceRef.current = setTimeout(async () => {
-      const hits = await searchEntities(supabase, query, { etype: entityType });
-      setResults(hits);
+      if (isCatalog) {
+        const catalog = await loadCatalog(supabase);
+        setResults(filterCatalog(catalog, entityType, query));
+      } else {
+        const hits = await searchEntities(supabase, query, { etype: entityType });
+        setResults(hits);
+      }
       setLoading(false);
     }, 200);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, entityType, supabase]);
+  }, [query, entityType, isCatalog, supabase]);
 
   const inputClass =
     variant === "underline"
@@ -89,9 +106,10 @@ export function EntityAutocomplete({
           )}
           {results.map((hit) => {
             const subtitle =
-              typeof hit.meta?.name_en === "string" && hit.meta.name_en !== hit.name
+              hit.subtitle ??
+              (typeof hit.meta?.name_en === "string" && hit.meta.name_en !== hit.name
                 ? hit.meta.name_en
-                : null;
+                : null);
             return (
               <li key={hit.id}>
                 <button
