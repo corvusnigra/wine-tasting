@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { EntityAutocomplete } from "./EntityAutocomplete";
-import { regionHitFor } from "@/lib/search/catalog";
+import { regionHitFor, appendWineToCatalog } from "@/lib/search/catalog";
 import { normalizeQuery } from "@/lib/search/normalize";
 import type { SearchHit } from "@/lib/search/api";
 
@@ -117,6 +117,14 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
       toast.error(error?.message ?? "Не удалось создать вино");
       return;
     }
+    appendWineToCatalog({
+      id: data.id,
+      name: data.name,
+      vintage: data.vintage,
+      wine_type: data.wine_type,
+      producer_id: producer?.id ?? null,
+      region_id: region?.id ?? null,
+    });
     toast.success(`«${data.name}» добавлено в каталог`);
     onCreated(data as CreatedWine);
     onClose();

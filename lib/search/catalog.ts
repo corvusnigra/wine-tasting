@@ -29,12 +29,23 @@ type ProducerRow = {
   region_id: string | null;
   search_aliases: string[];
 };
+type WineRow = {
+  id: string;
+  name: string;
+  vintage: number | null;
+  wine_type: string;
+  producer_id: string | null;
+  region_id: string | null;
+  search_aliases: string[];
+};
 
 type Catalog = {
   grapes: GrapeRow[];
   regions: RegionRow[];
   producers: ProducerRow[];
+  wines: WineRow[];
   regionById: Map<string, RegionRow>;
+  producerById: Map<string, ProducerRow>;
 };
 
 let cache: Catalog | null = null;
@@ -56,20 +67,45 @@ export async function loadCatalog(
   if (cache) return cache;
   if (inflight) return inflight;
   inflight = (async () => {
-    const [g, r, p] = await Promise.all([
+    const [g, r, p, w] = await Promise.all([
       sb.from("grapes").select("id, name_ru, name_en, color, search_aliases"),
       sb.from("regions").select("id, name_ru, name_en, country_code, classification, search_aliases"),
       sb.from("producers").select("id, name, region_id, search_aliases"),
+      sb.from("wines").select("id, name, vintage, wine_type, producer_id, region_id, search_aliases"),
     ]);
     const grapes = (g.data ?? []) as GrapeRow[];
     const regions = (r.data ?? []) as RegionRow[];
     const producers = (p.data ?? []) as ProducerRow[];
+    const wines = (w.data ?? []) as WineRow[];
     const regionById = new Map(regions.map((x) => [x.id, x]));
-    cache = { grapes, regions, producers, regionById };
+    const producerById = new Map(producers.map((x) => [x.id, x]));
+    cache = { grapes, regions, producers, wines, regionById, producerById };
     inflight = null;
     return cache;
   })();
   return inflight;
+}
+
+/** Push a freshly-created wine into the cache so later searches find it. */
+export function appendWineToCatalog(w: {
+  id: string;
+  name: string;
+  vintage: number | null;
+  wine_type: string;
+  producer_id?: string | null;
+  region_id?: string | null;
+}): void {
+  if (!cache) return;
+  if (cache.wines.some((x) => x.id === w.id)) return;
+  cache.wines.unshift({
+    id: w.id,
+    name: w.name,
+    vintage: w.vintage,
+    wine_type: w.wine_type,
+    producer_id: w.producer_id ?? null,
+    region_id: w.region_id ?? null,
+    search_aliases: [],
+  });
 }
 
 function blob(parts: Array<string | null | undefined>): string {
@@ -159,8 +195,32 @@ export function filterCatalog(
       }));
   }
 
-  // producer
-  return catalog.producers
+  if (etype === "producer") {
+    return catalog.producers
+      .map((x) => ({
+        x,
+        s: score(blob([x.name, ...x.search_aliases]), nq),
+      }))
+      .filter((r) => r.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, lim)
+      .map(({ x }) => {
+        const region = x.region_id ? catalog.regionById.get(x.region_id) : null;
+        return {
+          id: x.id,
+          entity_type: "producer" as const,
+          name: x.name,
+          meta: { region_id: x.region_id },
+          rank: 1,
+          subtitle: region
+            ? [region.name_ru, COUNTRY_RU[region.country_code]].filter(Boolean).join(" · ")
+            : null,
+        };
+      });
+  }
+
+  // wine
+  return catalog.wines
     .map((x) => ({
       x,
       s: score(blob([x.name, ...x.search_aliases]), nq),
@@ -169,16 +229,19 @@ export function filterCatalog(
     .sort((a, b) => b.s - a.s)
     .slice(0, lim)
     .map(({ x }) => {
-      const region = x.region_id ? catalog.regionById.get(x.region_id) : null;
+      const producer = x.producer_id ? catalog.producerById.get(x.producer_id) : null;
       return {
         id: x.id,
-        entity_type: "producer" as const,
+        entity_type: "wine" as const,
         name: x.name,
-        meta: { region_id: x.region_id },
+        meta: {
+          vintage: x.vintage,
+          producer_id: x.producer_id,
+          region_id: x.region_id,
+          wine_type: x.wine_type,
+        },
         rank: 1,
-        subtitle: region
-          ? [region.name_ru, COUNTRY_RU[region.country_code]].filter(Boolean).join(" · ")
-          : null,
+        subtitle: [producer?.name, x.vintage].filter(Boolean).join(" · ") || null,
       };
     });
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
-import { searchEntities, type EntityType, type SearchHit } from "@/lib/search/api";
+import { type EntityType, type SearchHit } from "@/lib/search/api";
 import { loadCatalog, filterCatalog } from "@/lib/search/catalog";
 import { cn } from "@/lib/utils/cn";
 
@@ -37,10 +37,6 @@ export function EntityAutocomplete({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const supabase = useSupabaseBrowser();
 
-  // Bounded reference tables are searched locally (instant, offline-friendly).
-  // Only the unbounded wines table goes through the server RPC.
-  const isCatalog = entityType !== "wine";
-
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (!containerRef.current?.contains(e.target as Node)) {
@@ -51,11 +47,14 @@ export function EntityAutocomplete({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  // Warm the catalog cache as soon as a catalog field mounts.
+  // Warm the catalog cache as soon as the field mounts.
   useEffect(() => {
-    if (isCatalog) void loadCatalog(supabase);
-  }, [isCatalog, supabase]);
+    void loadCatalog(supabase);
+  }, [supabase]);
 
+  // The whole catalogue (grapes/regions/producers/wines) is searched locally —
+  // a friend group's catalogue is small, so one cached load beats per-keystroke
+  // RPC round-trips that stall on poor networks.
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!query.trim()) {
@@ -65,19 +64,14 @@ export function EntityAutocomplete({
     }
     setLoading(true);
     debounceRef.current = setTimeout(async () => {
-      if (isCatalog) {
-        const catalog = await loadCatalog(supabase);
-        setResults(filterCatalog(catalog, entityType, query));
-      } else {
-        const hits = await searchEntities(supabase, query, { etype: entityType });
-        setResults(hits);
-      }
+      const catalog = await loadCatalog(supabase);
+      setResults(filterCatalog(catalog, entityType, query));
       setLoading(false);
-    }, 200);
+    }, 150);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, entityType, isCatalog, supabase]);
+  }, [query, entityType, supabase]);
 
   const inputClass =
     variant === "underline"
