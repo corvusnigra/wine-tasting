@@ -27,16 +27,26 @@ export function DescriptorPicker({
   const supabase = useSupabaseBrowser();
   const [open, setOpen] = useState(false);
   const [all, setAll] = useState<Descriptor[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (!open || all.length > 0) return;
+    setLoading(true);
+    setLoadError(null);
     void (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("descriptors")
         .select("id, label_en, label_ru, family, subfamily, tier")
         .order("family", { ascending: true });
-      if (data) setAll(data as Descriptor[]);
+      if (error) {
+        console.error("descriptors load:", error);
+        setLoadError(error.message);
+      } else if (data) {
+        setAll(data as Descriptor[]);
+      }
+      setLoading(false);
     })();
   }, [open, all.length, supabase]);
 
@@ -158,9 +168,19 @@ export function DescriptorPicker({
               />
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain px-5 sm:px-8 pb-8">
-              {byFamily.size === 0 && (
+              {loading && (
                 <p className="text-sm text-muted italic text-center py-6">
-                  Ничего не найдено.
+                  Раскладываем ароматы…
+                </p>
+              )}
+              {!loading && loadError && (
+                <p className="text-sm text-rust italic text-center py-6">
+                  Не удалось загрузить палитру. Потяните вниз и откройте снова.
+                </p>
+              )}
+              {!loading && !loadError && byFamily.size === 0 && (
+                <p className="text-sm text-muted italic text-center py-6">
+                  {query.trim() ? "Ничего не найдено." : "Палитра пуста."}
                 </p>
               )}
               {Array.from(byFamily.entries()).map(([family, items]) => (
