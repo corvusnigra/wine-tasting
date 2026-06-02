@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { RevealConfetti } from "@/components/session/RevealConfetti";
+import { EveningCard } from "@/components/session/EveningCard";
 import { wineTypeRu } from "@/lib/tasting/wine-type";
 import { formatDateLong } from "@/lib/utils/date";
 import {
@@ -188,6 +189,35 @@ export default async function RevealPage({ params }: { params: Params }) {
   const winner = ranked[0];
   const others = ranked.slice(1);
 
+  // Shareable "evening card" summary.
+  const controversialId = [...badges.entries()].find(([, bs]) =>
+    bs.includes("controversial")
+  )?.[0];
+  const eveningSummary = {
+    title: session.title,
+    dateLabel: formatDateLong(session.session_date),
+    participants: new Set(notes.map((n) => n.user_id)).size,
+    winner: winner
+      ? {
+          name: wineMeta(winner)?.name ?? "—",
+          score: aggByWine.get(winner.id)?.mean ?? null,
+        }
+      : null,
+    wines: ranked.map((w) => ({
+      position: w.position,
+      name: wineMeta(w)?.name ?? "—",
+      score: aggByWine.get(w.id)?.mean ?? null,
+    })),
+    palate: winner
+      ? (aggByWine.get(winner.id)?.topDescriptors ?? []).map((d) => d.label)
+      : [],
+    controversial: controversialId
+      ? wineMeta(
+          (wines ?? []).find((w) => w.id === controversialId)!
+        )?.name ?? null
+      : null,
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 w-full wine-vignette">
       {winner && <RevealConfetti />}
@@ -204,6 +234,11 @@ export default async function RevealPage({ params }: { params: Params }) {
           {session.title}
         </h1>
         <p className="text-muted italic">{formatDateLong(session.session_date)}</p>
+        {winner && (
+          <div className="mt-6">
+            <EveningCard summary={eveningSummary} />
+          </div>
+        )}
       </header>
 
       {/* Winner — theatrical */}

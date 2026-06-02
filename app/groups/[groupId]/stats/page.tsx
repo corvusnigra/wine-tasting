@@ -229,10 +229,17 @@ export default async function StatsPage({ params }: { params: Params }) {
                     key={m.userId}
                     className="flex items-baseline justify-between gap-3 py-3 border-t border-border first:border-t-0"
                   >
-                    <span className="font-display text-lg">
-                      {memberName.get(m.userId) ?? "—"}
+                    <span className="min-w-0">
+                      <span className="font-display text-lg">
+                        {memberName.get(m.userId) ?? "—"}
+                      </span>
+                      {m.lean && (
+                        <span className="block text-xs text-gold italic">
+                          чаще выше оценивает {m.lean}
+                        </span>
+                      )}
                     </span>
-                    <span className="text-sm text-muted italic">
+                    <span className="text-sm text-muted italic shrink-0 text-right">
                       {m.ratings} оценок
                       {m.avg !== null && (
                         <span className="score-mark text-base ml-2">

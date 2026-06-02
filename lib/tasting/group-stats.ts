@@ -1,4 +1,5 @@
 import { modeOf } from "./aggregate";
+import { tasteLean } from "./taste-profile";
 
 // Rows come from a single nested query (see /groups/[id]/stats):
 // revealed wines_in_session of the group, with their wine + notes.
@@ -41,7 +42,12 @@ export type GroupStats = {
     tannin: string | null;
     body: string | null;
   };
-  members: Array<{ userId: string; avg: number | null; ratings: number }>;
+  members: Array<{
+    userId: string;
+    avg: number | null;
+    ratings: number;
+    lean: string | null;
+  }>;
 };
 
 export function computeGroupStats(wines: StatWine[]): GroupStats {
@@ -99,18 +105,27 @@ export function computeGroupStats(wines: StatWine[]): GroupStats {
     body: modeOf(allNotes.map((n) => n.palate?.body)),
   };
 
-  // per-member: avg score given + count
-  const byUser = new Map<string, number[]>();
+  // per-member: avg score given + count + taste lean
+  const byUser = new Map<string, StatNote[]>();
   for (const w of wines) {
     for (const n of w.notes) {
-      if (n.overall_score === null) continue;
       const arr = byUser.get(n.user_id) ?? [];
-      arr.push(n.overall_score);
+      arr.push(n);
       byUser.set(n.user_id, arr);
     }
   }
   const members = Array.from(byUser.entries())
-    .map(([userId, scores]) => ({ userId, avg: mean(scores), ratings: scores.length }))
+    .map(([userId, notes]) => {
+      const scores = notes
+        .map((n) => n.overall_score)
+        .filter((s): s is number => s !== null);
+      return {
+        userId,
+        avg: mean(scores),
+        ratings: scores.length,
+        lean: tasteLean(notes),
+      };
+    })
     .sort((a, b) => b.ratings - a.ratings);
 
   return {
