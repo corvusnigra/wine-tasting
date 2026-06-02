@@ -62,6 +62,14 @@ export default async function GroupPage({ params }: { params: Params }) {
               ? "1 вечер"
               : `${sessionCount} вечеров`}
         </p>
+        {sessionCount > 0 && (
+          <Link
+            href={`/groups/${groupId}/stats`}
+            className="inline-flex items-center gap-1.5 smallcaps text-[11px] text-gold hover:text-gold-light transition-colors mt-4"
+          >
+            память группы →
+          </Link>
+        )}
       </header>
 
       {/* Members + CTA */}

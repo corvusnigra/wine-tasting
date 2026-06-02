@@ -1,0 +1,252 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { computeGroupStats, type StatWine } from "@/lib/tasting/group-stats";
+import { wineTypeRu } from "@/lib/tasting/wine-type";
+
+type Params = Promise<{ groupId: string }>;
+
+const SWEET_RU: Record<string, string> = {
+  dry: "сухое", "off-dry": "почти сухое", "medium-dry": "полусухое",
+  "medium-sweet": "полусладкое", sweet: "сладкое", luscious: "очень сладкое",
+};
+const LEVEL_RU: Record<string, string> = {
+  low: "низкая", "medium-minus": "ниже среднего", medium: "средняя",
+  "medium-plus": "выше среднего", high: "высокая",
+};
+const BODY_RU: Record<string, string> = {
+  light: "лёгкое", "medium-minus": "ниже среднего", medium: "среднее",
+  "medium-plus": "выше среднего", full: "плотное",
+};
+
+export default async function StatsPage({ params }: { params: Params }) {
+  const { groupId } = await params;
+  const supabase = await createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) redirect("/login");
+
+  const { data: group } = await supabase
+    .from("groups")
+    .select("id, name")
+    .eq("id", groupId)
+    .maybeSingle();
+  if (!group) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
+        <h1 className="font-display italic text-4xl mb-3">Группа не найдена</h1>
+      </div>
+    );
+  }
+
+  // One nested query: revealed wines in this group's sessions + their notes.
+  const { data: rows } = await supabase
+    .from("wines_in_session")
+    .select(
+      "id, wines!inner(id, name, vintage, wine_type, grape_ids, regions(name_ru)), tasting_sessions!inner(id, group_id), tasting_notes(user_id, overall_score, palate)"
+    )
+    .eq("revealed", true)
+    .eq("tasting_sessions.group_id", groupId);
+
+  type Row = {
+    id: string;
+    wines: {
+      id: string;
+      name: string;
+      vintage: number | null;
+      wine_type: string;
+      grape_ids: string[];
+      regions: { name_ru: string } | null;
+    } | null;
+    tasting_sessions: { id: string } | null;
+    tasting_notes: Array<{
+      user_id: string;
+      overall_score: number | null;
+      palate: StatWine["notes"][number]["palate"];
+    }>;
+  };
+  const typed = (rows ?? []) as unknown as Row[];
+
+  const wines: StatWine[] = typed.map((r) => ({
+    wisId: r.id,
+    sessionId: r.tasting_sessions?.id ?? "",
+    name: r.wines?.name ?? "—",
+    vintage: r.wines?.vintage ?? null,
+    wineType: r.wines?.wine_type ?? "",
+    grapeIds: r.wines?.grape_ids ?? [],
+    regionName: r.wines?.regions?.name_ru ?? null,
+    notes: r.tasting_notes ?? [],
+  }));
+
+  const stats = computeGroupStats(wines);
+
+  // Resolve grape + member names.
+  const grapeIds = stats.topGrapes.map((g) => g.id);
+  const { data: grapeRows } = grapeIds.length
+    ? await supabase.from("grapes").select("id, name_ru").in("id", grapeIds)
+    : { data: [] };
+  const grapeName = new Map((grapeRows ?? []).map((g) => [g.id, g.name_ru]));
+
+  const memberIds = stats.members.map((m) => m.userId);
+  const { data: memberRows } = memberIds.length
+    ? await supabase.from("profiles").select("id, display_name").in("id", memberIds)
+    : { data: [] };
+  const memberName = new Map((memberRows ?? []).map((m) => [m.id, m.display_name]));
+
+  const empty = stats.winesCount === 0;
+
+  return (
+    <div className="max-w-3xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 w-full wine-vignette">
+      <header className="mb-10 anim-fade-up">
+        <Link
+          href={`/groups/${groupId}`}
+          className="smallcaps text-xs text-muted hover:text-gold transition-colors"
+        >
+          ← {group.name}
+        </Link>
+        <h1 className="font-display italic text-5xl sm:text-6xl leading-[0.95] mt-4">
+          Память группы
+        </h1>
+        {!empty && (
+          <p className="text-muted italic mt-2">
+            {stats.eveningsCount} вечеров · {stats.winesCount} вин ·{" "}
+            {stats.ratingsCount} оценок
+          </p>
+        )}
+      </header>
+
+      {empty ? (
+        <div className="card-edge rounded-2xl px-6 py-12 text-center">
+          <p className="font-display italic text-2xl mb-2">Пока нечего считать.</p>
+          <p className="text-muted italic">
+            Статистика появится после первого раскрытого вечера.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-12">
+          {/* Best wines */}
+          {stats.topWines.length > 0 && (
+            <section className="anim-fade-up stagger-1">
+              <h2 className="smallcaps text-xs text-muted mb-5 rule-left">
+                Лучшие вина
+              </h2>
+              <ol className="flex flex-col">
+                {stats.topWines.map((w, i) => (
+                  <li
+                    key={w.wisId}
+                    className="grid grid-cols-[2.5rem_1fr_auto] gap-4 items-baseline py-4 border-t border-border first:border-t-0"
+                  >
+                    <span className="editorial-num text-3xl text-gold-soft">
+                      {i + 1}
+                    </span>
+                    <span className="font-display text-xl break-words">
+                      {w.name}
+                      {w.vintage && (
+                        <span className="text-muted italic text-sm ml-2">{w.vintage}</span>
+                      )}
+                    </span>
+                    <span className="score-mark text-2xl">{Math.round(w.avg)}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {/* Group palate */}
+          <section className="anim-fade-up stagger-2">
+            <h2 className="smallcaps text-xs text-muted mb-5 rule-left">
+              Вкус группы
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { label: "Сладость", v: stats.groupPalate.sweetness, m: SWEET_RU },
+                { label: "Кислотность", v: stats.groupPalate.acidity, m: LEVEL_RU },
+                { label: "Танины", v: stats.groupPalate.tannin, m: LEVEL_RU },
+                { label: "Тельность", v: stats.groupPalate.body, m: BODY_RU },
+              ]
+                .filter((x) => x.v)
+                .map((x) => (
+                  <div key={x.label}>
+                    <div className="smallcaps text-[10px] text-muted mb-0.5">
+                      {x.label}
+                    </div>
+                    <div className="font-display italic text-lg text-foreground">
+                      {x.m[x.v as string] ?? x.v}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </section>
+
+          {/* Top grapes */}
+          {stats.topGrapes.length > 0 && (
+            <section className="anim-fade-up stagger-3">
+              <h2 className="smallcaps text-xs text-muted mb-5 rule-left">
+                Любимые сорта
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {stats.topGrapes.map((g) => (
+                  <span
+                    key={g.id}
+                    className="px-4 min-h-10 inline-flex items-center gap-2 rounded-full text-sm font-display italic bg-surface border border-border"
+                  >
+                    {grapeName.get(g.id) ?? "—"}
+                    <span className="smallcaps text-[10px] text-gold">×{g.count}</span>
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Top regions */}
+          {stats.topRegions.length > 0 && (
+            <section className="anim-fade-up stagger-4">
+              <h2 className="smallcaps text-xs text-muted mb-5 rule-left">
+                Регионы по среднему баллу
+              </h2>
+              <ul className="flex flex-col">
+                {stats.topRegions.map((r) => (
+                  <li
+                    key={r.name}
+                    className="flex items-baseline justify-between gap-3 py-3 border-t border-border first:border-t-0"
+                  >
+                    <span className="font-display text-lg">{r.name}</span>
+                    <span className="score-mark text-xl">{Math.round(r.avg)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Members */}
+          {stats.members.length > 0 && (
+            <section className="anim-fade-up stagger-5">
+              <h2 className="smallcaps text-xs text-muted mb-5 rule-left">
+                Участники
+              </h2>
+              <ul className="flex flex-col">
+                {stats.members.map((m) => (
+                  <li
+                    key={m.userId}
+                    className="flex items-baseline justify-between gap-3 py-3 border-t border-border first:border-t-0"
+                  >
+                    <span className="font-display text-lg">
+                      {memberName.get(m.userId) ?? "—"}
+                    </span>
+                    <span className="text-sm text-muted italic">
+                      {m.ratings} оценок
+                      {m.avg !== null && (
+                        <span className="score-mark text-base ml-2">
+                          ср. {Math.round(m.avg)}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

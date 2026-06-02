@@ -235,7 +235,13 @@ export default async function RevealPage({ params }: { params: Params }) {
 
             <div className="flex flex-col items-center text-center">
               <h2 className="font-display text-3xl sm:text-5xl mb-2 break-words">
-                {wine?.name}
+                {wine?.id ? (
+                  <Link href={`/wines/${wine.id}`} className="hover:text-gold transition-colors">
+                    {wine.name}
+                  </Link>
+                ) : (
+                  wine?.name
+                )}
               </h2>
               <p className="text-sm text-muted italic mb-1">
                 {[wine?.vintage, wineTypeRu(wine?.wine_type)]
@@ -368,7 +374,13 @@ export default async function RevealPage({ params }: { params: Params }) {
               </div>
               <div className="min-w-0">
                 <h2 className="font-display text-xl sm:text-2xl mb-1 break-words">
-                  {wine?.name}
+                  {wine?.id ? (
+                    <Link href={`/wines/${wine.id}`} className="hover:text-gold transition-colors">
+                      {wine.name}
+                    </Link>
+                  ) : (
+                    wine?.name
+                  )}
                 </h2>
                 <p className="text-sm text-muted italic mb-1">
                   {[wine?.vintage, wineTypeRu(wine?.wine_type)]
