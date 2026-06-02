@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Drawer } from "vaul";
 import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { normalizeQuery } from "@/lib/search/normalize";

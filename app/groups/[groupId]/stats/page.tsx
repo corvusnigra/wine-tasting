@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { computeGroupStats, type StatWine } from "@/lib/tasting/group-stats";
-import { wineTypeRu } from "@/lib/tasting/wine-type";
 import { SWEETNESS, LEVEL_5, BODY } from "@/lib/tasting/sat-vocabulary";
 import { plural } from "@/lib/utils/plural";
 import { OrdinalMeter } from "@/components/tasting/OrdinalMeter";

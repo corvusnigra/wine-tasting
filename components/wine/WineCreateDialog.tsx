@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
@@ -95,7 +95,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
       .slice(0, 8);
   }, [producerWines, name]);
 
-  function useExisting(w: ProducerWine) {
+  function applyExisting(w: ProducerWine) {
     toast.success(`«${w.name}» уже в каталоге — добавлено`);
     onCreated(w);
     onClose();
@@ -196,7 +196,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
                     <button
                       key={w.id}
                       type="button"
-                      onClick={() => useExisting(w)}
+                      onClick={() => applyExisting(w)}
                       className="w-full text-left px-4 py-2 hover:bg-bordeaux/10 transition-colors"
                     >
                       <span className="font-display">{w.name}</span>

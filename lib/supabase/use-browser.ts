@@ -1,11 +1,12 @@
-import { useRef } from "react";
+import { useState } from "react";
 import { createSupabaseBrowserClient } from "./client";
 
 /**
- * Stable per-component browser Supabase client. Created once, reused
- * across renders. Replaces the repeated
- * `useRef(createSupabaseBrowserClient()).current` idiom.
+ * Stable per-component browser Supabase client. The lazy useState initializer
+ * runs the factory exactly once (not on every render) and returns a value
+ * that's safe to read during render.
  */
 export function useSupabaseBrowser() {
-  return useRef(createSupabaseBrowserClient()).current;
+  const [client] = useState(createSupabaseBrowserClient);
+  return client;
 }
