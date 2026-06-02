@@ -6,6 +6,8 @@ import { InviteShare } from "@/components/session/InviteShare";
 import { ensureGroupInvite } from "@/lib/groups/ensure-group-invite";
 import { RevealButton } from "@/components/session/RevealButton";
 import { SessionLiveRefresher } from "@/components/session/SessionLiveRefresher";
+import { EditableTitle } from "@/components/session/EditableTitle";
+import { SessionHostTools } from "@/components/session/SessionHostTools";
 import { Avatar } from "@/components/layout/Avatar";
 import { wineTypeRu } from "@/lib/tasting/wine-type";
 import { formatDateLong } from "@/lib/utils/date";
@@ -109,6 +111,18 @@ export default async function SessionPage({ params }: { params: Params }) {
       .map((n) => n.wine_in_session_id)
   );
 
+  // Per-member completion (for named realtime progress in "За столом").
+  const completedByUser = new Map<string, number>();
+  for (const n of notes ?? []) {
+    if (!n.submitted_at) continue;
+    completedByUser.set(n.user_id, (completedByUser.get(n.user_id) ?? 0) + 1);
+  }
+
+  const anyRevealed = (winesInSession ?? []).some((w) => w.revealed);
+  const maxPosition = (winesInSession ?? []).reduce(
+    (m, w) => Math.max(m, w.position),
+    0
+  );
   const sessionDate = new Date(session.session_date);
 
   return (
@@ -123,10 +137,24 @@ export default async function SessionPage({ params }: { params: Params }) {
         <p className="smallcaps text-xs text-gold mb-3">
           {formatDateLong(sessionDate)}
         </p>
-        <h1 className="font-display italic text-4xl sm:text-5xl md:text-6xl leading-[0.95] break-words">
-          {session.title}
-        </h1>
+        <EditableTitle
+          sessionId={sessionId}
+          initialTitle={session.title}
+          canEdit={isHost && !anyRevealed}
+        />
       </header>
+
+      {/* Host onboarding — only before anyone has rated */}
+      {isHost && !anyRevealed && participantCount === 0 && (
+        <div className="card-edge rounded-2xl px-5 py-4 mb-8 sm:mb-10">
+          <p className="smallcaps text-[10px] text-gold mb-1">Вы — хозяин вечера</p>
+          <p className="text-sm text-muted italic leading-relaxed">
+            Покажите QR-код друзьям, чтобы они присоединились со своих телефонов.
+            Каждый оценит вина вслепую. Когда все закончат — внизу станет активна
+            кнопка «Раскрыть результаты».
+          </p>
+        </div>
+      )}
 
       {/* Your progress banner */}
       {totalWines > 0 && (
@@ -218,16 +246,32 @@ export default async function SessionPage({ params }: { params: Params }) {
 
       <section>
         <h2 className="smallcaps text-xs text-muted mb-6 rule-left">За столом</h2>
-        <div className="flex flex-wrap gap-x-4 gap-y-3 mb-8">
-          {members?.map((m) => (
-            <Avatar
-              key={m.user_id}
-              name={m.profiles?.display_name ?? null}
-              role={m.role}
-            />
-          ))}
+        <div className="flex flex-wrap gap-x-4 gap-y-4 mb-8">
+          {members?.map((m) => {
+            const done = completedByUser.get(m.user_id) ?? 0;
+            return (
+              <Avatar
+                key={m.user_id}
+                name={m.profiles?.display_name ?? null}
+                role={m.role}
+                done={totalWines > 0 && done >= totalWines}
+                subtitle={totalWines > 0 ? `${done}/${totalWines}` : undefined}
+              />
+            );
+          })}
         </div>
         {isHost && <RevealButton sessionId={sessionId} enabled={!!allWinesComplete} />}
+        {isHost && !anyRevealed && (
+          <SessionHostTools
+            sessionId={sessionId}
+            maxPosition={maxPosition}
+            flight={(winesInSession ?? []).map((w) => ({
+              wisId: w.id,
+              wineId: w.wines?.id ?? "",
+              name: w.wines?.name ?? "—",
+            }))}
+          />
+        )}
       </section>
     </div>
   );
