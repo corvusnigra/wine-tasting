@@ -71,12 +71,23 @@ const EMPTY: Catalog = {
 };
 
 async function fetchCatalogOnce(sb: SupabaseClient<Database>): Promise<Catalog> {
-  const [g, r, p, w] = await Promise.all([
-    sb.from("grapes").select("id, name_ru, name_en, color, search_aliases"),
-    sb.from("regions").select("id, name_ru, name_en, country_code, classification, search_aliases"),
-    sb.from("producers").select("id, name, region_id, search_aliases"),
-    sb.from("wines").select("id, name, vintage, wine_type, producer_id, region_id, search_aliases"),
-  ]);
+  // Hard timeout: the browser may negotiate HTTP/3 to Supabase and QUIC can
+  // stall indefinitely (ERR_QUIC_PROTOCOL_ERROR) — without an abort the fetch
+  // never settles and the autocomplete spins on "…" forever. Aborting lets the
+  // caller retry (the browser usually falls back to HTTP/2 on the next try).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+  let g, r, p, w;
+  try {
+    [g, r, p, w] = await Promise.all([
+      sb.from("grapes").select("id, name_ru, name_en, color, search_aliases").abortSignal(controller.signal),
+      sb.from("regions").select("id, name_ru, name_en, country_code, classification, search_aliases").abortSignal(controller.signal),
+      sb.from("producers").select("id, name, region_id, search_aliases").abortSignal(controller.signal),
+      sb.from("wines").select("id, name, vintage, wine_type, producer_id, region_id, search_aliases").abortSignal(controller.signal),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
   // If any query errored (flaky network), throw so the caller can retry —
   // never cache a half-empty catalogue.
   if (g.error || r.error || p.error || w.error) {
