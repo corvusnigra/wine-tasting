@@ -3,46 +3,55 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
-import { searchEntities, type SearchHit } from "@/lib/search/api";
+import { loadCatalog, filterCatalog } from "@/lib/search/catalog";
+import type { EntityType, SearchHit } from "@/lib/search/api";
 
-const TYPE_LABEL = {
-  grape: "Сорт",
-  region: "Регион",
-  producer: "Производитель",
-  wine: "Вино",
-} as const;
+type Hit = SearchHit & { subtitle?: string | null };
+
+const TYPE_LABEL: Record<EntityType, string> = {
+  grape: "Сорта",
+  region: "Регионы",
+  producer: "Производители",
+  wine: "Вина",
+};
+const ORDER: EntityType[] = ["wine", "producer", "region", "grape"];
 
 export function SearchClient() {
   const [q, setQ] = useState("");
-  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [grouped, setGrouped] = useState<Record<string, Hit[]>>({});
   const [loading, setLoading] = useState(false);
   const supabase = useSupabaseBrowser();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    void loadCatalog(supabase);
+  }, [supabase]);
+
+  useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!q.trim()) {
-      setHits([]);
+      setGrouped({});
       setLoading(false);
       return;
     }
     setLoading(true);
     debounceRef.current = setTimeout(async () => {
-      const results = await searchEntities(supabase, q, { lim: 30 });
-      setHits(results);
+      // All searched locally over the cached catalogue — instant, no RPC.
+      const catalog = await loadCatalog(supabase);
+      const next: Record<string, Hit[]> = {};
+      for (const etype of ORDER) {
+        const hits = filterCatalog(catalog, etype, q, 12);
+        if (hits.length) next[etype] = hits;
+      }
+      setGrouped(next);
       setLoading(false);
-    }, 200);
+    }, 150);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [q, supabase]);
 
-  const grouped = hits.reduce<Record<string, SearchHit[]>>((acc, hit) => {
-    (acc[hit.entity_type] ??= []).push(hit);
-    return acc;
-  }, {});
-
-  const order: Array<keyof typeof TYPE_LABEL> = ["wine", "producer", "region", "grape"];
+  const hasResults = ORDER.some((t) => grouped[t]?.length);
 
   return (
     <div>
@@ -55,45 +64,50 @@ export function SearchClient() {
         className="w-full h-12 px-4 rounded-full bg-surface border border-border focus:border-gold focus:outline-none mb-6"
       />
 
-      {loading && <p className="text-sm text-muted">…</p>}
+      {loading && <p className="text-sm text-muted italic">…</p>}
 
-      {!loading && q.trim() && hits.length === 0 && (
-        <p className="text-muted">Ничего не найдено.</p>
+      {!loading && q.trim() && !hasResults && (
+        <p className="text-muted italic">Ничего не найдено.</p>
       )}
 
-      {order.map(
+      {ORDER.map(
         (type) =>
           grouped[type]?.length > 0 && (
             <section key={type} className="mb-6">
-              <h2 className="text-xs uppercase tracking-wider text-muted mb-2">
+              <h2 className="smallcaps text-[10px] text-muted mb-2 rule-left">
                 {TYPE_LABEL[type]}
               </h2>
-              <ul className="flex flex-col gap-1">
-                {grouped[type].map((hit) => (
-                  <li key={hit.id}>
-                    {type === "wine" ? (
-                      <Link
-                        href={`/wines/${hit.id}`}
-                        className="flex items-baseline justify-between p-3 rounded-xl bg-surface border border-border hover:border-gold transition-colors"
-                      >
-                        <span>{hit.name}</span>
-                        {typeof hit.meta?.vintage === "number" && (
-                          <span className="text-xs text-muted">{hit.meta.vintage}</span>
+              <ul className="flex flex-col gap-1.5">
+                {grouped[type].map((hit) => {
+                  const inner = (
+                    <>
+                      <div>
+                        <span className="font-display">{hit.name}</span>
+                        {hit.subtitle && (
+                          <span className="text-xs text-muted italic ml-2">
+                            {hit.subtitle}
+                          </span>
                         )}
-                      </Link>
-                    ) : (
-                      <div className="p-3 rounded-xl bg-surface border border-border">
-                        {hit.name}
-                        {typeof hit.meta?.name_en === "string" &&
-                          hit.meta.name_en !== hit.name && (
-                            <span className="text-xs text-muted ml-2">
-                              {hit.meta.name_en}
-                            </span>
-                          )}
                       </div>
-                    )}
-                  </li>
-                ))}
+                    </>
+                  );
+                  return (
+                    <li key={hit.id}>
+                      {type === "wine" ? (
+                        <Link
+                          href={`/wines/${hit.id}`}
+                          className="block p-3 rounded-xl bg-surface border border-border hover:border-gold transition-colors"
+                        >
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div className="p-3 rounded-xl bg-surface border border-border">
+                          {inner}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           )

@@ -8,14 +8,25 @@ export default async function Home() {
   const { data: userData } = await supabase.auth.getUser();
 
   if (userData.user) {
-    const { data: membership } = await supabase
+    const { data: memberships } = await supabase
       .from("group_members")
       .select("group_id")
-      .eq("user_id", userData.user.id)
-      .limit(1)
-      .maybeSingle();
-    if (membership) {
-      redirect(`/groups/${membership.group_id}`);
+      .eq("user_id", userData.user.id);
+    const groupIds = (memberships ?? []).map((m) => m.group_id);
+
+    if (groupIds.length === 1) {
+      redirect(`/groups/${groupIds[0]}`);
+    }
+    if (groupIds.length > 1) {
+      // Land on the group with the most recent evening, not an arbitrary one.
+      const { data: latest } = await supabase
+        .from("tasting_sessions")
+        .select("group_id")
+        .in("group_id", groupIds)
+        .order("session_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      redirect(`/groups/${latest?.group_id ?? groupIds[0]}`);
     }
   }
 
