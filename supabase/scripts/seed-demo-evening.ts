@@ -36,12 +36,16 @@ async function withRetry<T>(label: string, fn: () => Promise<T>, tries = 8): Pro
   throw last;
 }
 
-// Retrying query that throws on a PostgREST error.
-async function q<T>(label: string, build: () => PromiseLike<{ data: T; error: unknown }>): Promise<T> {
+// Retrying query that throws on a PostgREST error. `data` is nullable on the
+// supabase builder (null on failure), so the helper accepts that and narrows.
+async function q<T>(
+  label: string,
+  build: () => PromiseLike<{ data: T | null; error: unknown }>
+): Promise<T> {
   return withRetry(label, async () => {
     const { data, error } = await build();
     if (error) throw new Error((error as { message?: string }).message ?? JSON.stringify(error));
-    return data;
+    return data as T;
   });
 }
 

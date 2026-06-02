@@ -2,6 +2,9 @@
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { clearGuestId } from "@/lib/guest/guest-id";
 
 function initials(name: string | null | undefined): string {
   if (!name) return "·";
@@ -15,6 +18,17 @@ type Props = {
 };
 
 export function UserMenu({ displayName, email }: Props) {
+  const router = useRouter();
+
+  async function handleSignOut() {
+    // Local scope clears the session cookie without a (flaky) GoTrue round-trip.
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut({ scope: "local" });
+    clearGuestId();
+    router.push("/");
+    router.refresh();
+  }
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -50,15 +64,11 @@ export function UserMenu({ displayName, email }: Props) {
               Профиль
             </Link>
           </DropdownMenu.Item>
-          <DropdownMenu.Item asChild>
-            <form action="/api/auth/signout" method="post">
-              <button
-                type="submit"
-                className="w-full text-left px-3 py-2 rounded-xl smallcaps text-xs text-foreground hover:bg-bordeaux/10 data-[highlighted]:bg-bordeaux/10 outline-none cursor-pointer transition-colors"
-              >
-                Выйти
-              </button>
-            </form>
+          <DropdownMenu.Item
+            onSelect={() => void handleSignOut()}
+            className="block px-3 py-2 rounded-xl smallcaps text-xs text-foreground hover:bg-bordeaux/10 data-[highlighted]:bg-bordeaux/10 outline-none cursor-pointer transition-colors"
+          >
+            Выйти
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
