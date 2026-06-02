@@ -9,7 +9,7 @@ import { SessionLiveRefresher } from "@/components/session/SessionLiveRefresher"
 import { EditableTitle } from "@/components/session/EditableTitle";
 import { SessionHostTools } from "@/components/session/SessionHostTools";
 import { Avatar } from "@/components/layout/Avatar";
-import { wineTypeRu } from "@/lib/tasting/wine-type";
+import { wineTypeRu, wineTypeColor } from "@/lib/tasting/wine-type";
 import { formatDateLong } from "@/lib/utils/date";
 
 type Params = Promise<{ sessionId: string }>;
@@ -214,6 +214,11 @@ export default async function SessionPage({ params }: { params: Params }) {
                       {wine?.name ?? "—"}
                     </h3>
                     <p className="text-sm text-muted italic mt-1">
+                      <span
+                        className="inline-block w-2 h-2 rounded-full align-middle mr-2"
+                        style={{ background: wineTypeColor(wine?.wine_type) }}
+                        aria-hidden
+                      />
                       {[wine?.vintage, wineTypeRu(wine?.wine_type)]
                         .filter(Boolean)
                         .join(" · ")}

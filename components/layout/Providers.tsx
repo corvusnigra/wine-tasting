@@ -23,6 +23,8 @@ export function Providers({ children }: { children: ReactNode }) {
       <Toaster
         position="top-center"
         offset={{ top: "5rem" }}
+        visibleToasts={2}
+        duration={2600}
         toastOptions={{
           unstyled: false,
           classNames: {

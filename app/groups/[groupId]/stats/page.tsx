@@ -5,36 +5,7 @@ import { computeGroupStats, type StatWine } from "@/lib/tasting/group-stats";
 import { wineTypeRu } from "@/lib/tasting/wine-type";
 import { SWEETNESS, LEVEL_5, BODY } from "@/lib/tasting/sat-vocabulary";
 import { plural } from "@/lib/utils/plural";
-
-/** Static, server-rendered ordinal meter — the gold tick-scale used on the
- *  tasting card, echoed here so the group palate reads in the same language. */
-function PalateMeter({
-  scale,
-  value,
-}: {
-  scale: readonly string[];
-  value: string;
-}) {
-  const idx = scale.indexOf(value);
-  const pct = idx < 0 || scale.length < 2 ? 0 : (idx / (scale.length - 1)) * 100;
-  return (
-    <div className="scale-meter" aria-hidden>
-      <div className="scale-meter__fill" style={{ width: `${pct}%` }} />
-      <div className="scale-meter__ticks">
-        {scale.map((s, i) => (
-          <span
-            key={s}
-            className={[
-              "scale-meter__tick",
-              idx >= 0 && i <= idx ? "is-on" : "",
-              i === idx ? "is-cursor" : "",
-            ].join(" ")}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
+import { OrdinalMeter } from "@/components/tasting/OrdinalMeter";
 
 type Params = Promise<{ groupId: string }>;
 
@@ -256,7 +227,7 @@ export default async function StatsPage({ params }: { params: Params }) {
                         {x.m[x.v as string] ?? x.v}
                       </span>
                     </div>
-                    <PalateMeter scale={x.scale} value={x.v as string} />
+                    <OrdinalMeter scale={x.scale} value={x.v as string} />
                   </div>
                 ))}
             </div>

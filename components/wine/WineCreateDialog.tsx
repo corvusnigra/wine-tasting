@@ -48,6 +48,8 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
   const [wineType, setWineType] = useState<WineType>("red");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Common case is just name + type; everything else hides behind a disclosure.
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Existing wines of the chosen producer — to suggest in the name field
   // and avoid creating duplicates.
@@ -65,6 +67,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
       setWineType("red");
       setPhotoUrl(null);
       setProducerWines([]);
+      setShowAdvanced(false);
     }
   }, [open]);
 
@@ -167,21 +170,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
               <span className="text-xs">·</span>
             </div>
 
-            {/* Producer first — it drives region + name suggestions */}
-            <div>
-              <label className="smallcaps text-[10px] text-muted block mb-1.5">
-                {t("producer")}
-              </label>
-              <EntityAutocomplete
-                entityType="producer"
-                value={producer}
-                onSelect={onProducerSelect}
-                variant="underline"
-                placeholder="Antinori, Абрау-Дюрсо …"
-              />
-            </div>
-
-            {/* Name — suggests the producer's existing wines */}
+            {/* Essentials — name + type cover the common case. */}
             <div className="relative">
               <label className="smallcaps text-[10px] text-muted block mb-1.5">
                 {t("name")}
@@ -220,86 +209,6 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
               )}
             </div>
 
-            {/* Region — auto-filled from producer, still editable */}
-            <div>
-              <label className="smallcaps text-[10px] text-muted block mb-1.5">
-                {t("region")}
-                {region && producer && (
-                  <span className="text-gold ml-2 normal-case tracking-normal">
-                    подставлен автоматически
-                  </span>
-                )}
-              </label>
-              <EntityAutocomplete
-                key={region?.id ?? "no-region"}
-                entityType="region"
-                value={region}
-                onSelect={setRegion}
-                variant="underline"
-                placeholder="Тоскана, Кахетия, …"
-              />
-            </div>
-
-            <div>
-              <label className="smallcaps text-[10px] text-muted block mb-1.5">
-                {t("grapes")}
-              </label>
-              <EntityAutocomplete
-                entityType="grape"
-                variant="underline"
-                onSelect={(g) => {
-                  if (!grapes.some((x) => x.id === g.id)) setGrapes([...grapes, g]);
-                }}
-                placeholder="Каберне, Мерло, Саперави …"
-              />
-              {grapes.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {grapes.map((g) => (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => setGrapes(grapes.filter((x) => x.id !== g.id))}
-                      className="px-3.5 min-h-9 inline-flex items-center rounded-full text-sm font-display italic bg-bordeaux/20 border border-bordeaux/50 text-foreground hover:bg-bordeaux/30 transition-colors active:scale-95"
-                    >
-                      {g.name} <span className="text-muted ml-0.5">×</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="smallcaps text-[10px] text-muted block mb-1.5">
-                  {t("vintage")}
-                </label>
-                <input
-                  type="number"
-                  min={1900}
-                  max={2100}
-                  value={vintage}
-                  onChange={(e) => setVintage(e.target.value)}
-                  placeholder="2020"
-                  className="input-underline text-xl"
-                />
-              </div>
-              <div>
-                <label className="smallcaps text-[10px] text-muted block mb-1.5">
-                  {t("abv")}
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min={0}
-                  max={25}
-                  value={abv}
-                  onChange={(e) => setAbv(e.target.value)}
-                  placeholder="13.5"
-                  className="input-underline text-xl"
-                />
-              </div>
-            </div>
-
             <div>
               <span className="smallcaps text-[10px] text-muted block mb-3">
                 {t("type")}
@@ -322,12 +231,119 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
               </div>
             </div>
 
-            <div>
-              <span className="smallcaps text-[10px] text-muted block mb-3">
-                Фото этикетки
-              </span>
-              <LabelPhotoUpload value={photoUrl} onChange={setPhotoUrl} />
-            </div>
+            {/* Advanced — producer, region, grapes, vintage, abv, photo. */}
+            <button
+              type="button"
+              onClick={() => setShowAdvanced((v) => !v)}
+              className="smallcaps text-[11px] text-gold hover:text-gold-light self-start transition-colors"
+            >
+              {showAdvanced ? "скрыть подробности ▴" : "подробнее ▾"}
+            </button>
+
+            {showAdvanced && (
+              <div className="flex flex-col gap-6 sm:gap-7 anim-fade-up">
+                {/* Producer drives region + name suggestions */}
+                <div>
+                  <label className="smallcaps text-[10px] text-muted block mb-1.5">
+                    {t("producer")}
+                  </label>
+                  <EntityAutocomplete
+                    entityType="producer"
+                    value={producer}
+                    onSelect={onProducerSelect}
+                    variant="underline"
+                    placeholder="Antinori, Абрау-Дюрсо …"
+                  />
+                </div>
+
+                {/* Region — auto-filled from producer, still editable */}
+                <div>
+                  <label className="smallcaps text-[10px] text-muted block mb-1.5">
+                    {t("region")}
+                    {region && producer && (
+                      <span className="text-gold ml-2 normal-case tracking-normal">
+                        подставлен автоматически
+                      </span>
+                    )}
+                  </label>
+                  <EntityAutocomplete
+                    key={region?.id ?? "no-region"}
+                    entityType="region"
+                    value={region}
+                    onSelect={setRegion}
+                    variant="underline"
+                    placeholder="Тоскана, Кахетия, …"
+                  />
+                </div>
+
+                <div>
+                  <label className="smallcaps text-[10px] text-muted block mb-1.5">
+                    {t("grapes")}
+                  </label>
+                  <EntityAutocomplete
+                    entityType="grape"
+                    variant="underline"
+                    onSelect={(g) => {
+                      if (!grapes.some((x) => x.id === g.id)) setGrapes([...grapes, g]);
+                    }}
+                    placeholder="Каберне, Мерло, Саперави …"
+                  />
+                  {grapes.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {grapes.map((g) => (
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() => setGrapes(grapes.filter((x) => x.id !== g.id))}
+                          className="px-3.5 min-h-9 inline-flex items-center rounded-full text-sm font-display italic bg-bordeaux/20 border border-bordeaux/50 text-foreground hover:bg-bordeaux/30 transition-colors active:scale-95"
+                        >
+                          {g.name} <span className="text-muted ml-0.5">×</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="smallcaps text-[10px] text-muted block mb-1.5">
+                      {t("vintage")}
+                    </label>
+                    <input
+                      type="number"
+                      min={1900}
+                      max={2100}
+                      value={vintage}
+                      onChange={(e) => setVintage(e.target.value)}
+                      placeholder="2020"
+                      className="input-underline text-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="smallcaps text-[10px] text-muted block mb-1.5">
+                      {t("abv")}
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min={0}
+                      max={25}
+                      value={abv}
+                      onChange={(e) => setAbv(e.target.value)}
+                      placeholder="13.5"
+                      className="input-underline text-xl"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <span className="smallcaps text-[10px] text-muted block mb-3">
+                    Фото этикетки
+                  </span>
+                  <LabelPhotoUpload value={photoUrl} onChange={setPhotoUrl} />
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-3 justify-end pt-4 border-t border-border">
               <Dialog.Close asChild>

@@ -555,7 +555,11 @@ function ScalePicker({
       </div>
       {scale === "5stars" ? (
         <div>
-          <div className="flex justify-center gap-2 sm:gap-3 mb-3">
+          <div
+            className={`flex justify-center gap-2 sm:gap-3 mb-3 ${
+              value === 5 ? "stars-peak" : ""
+            }`}
+          >
             {[1, 2, 3, 4, 5].map((v) => (
               <button
                 key={v}

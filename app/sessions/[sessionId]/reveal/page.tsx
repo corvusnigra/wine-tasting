@@ -4,8 +4,18 @@ import { getTranslations } from "next-intl/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { RevealConfetti } from "@/components/session/RevealConfetti";
 import { EveningCard } from "@/components/session/EveningCard";
-import { wineTypeRu } from "@/lib/tasting/wine-type";
+import { wineTypeRu, wineTypeColor } from "@/lib/tasting/wine-type";
 import { formatDateLong } from "@/lib/utils/date";
+import { OrdinalMeter } from "@/components/tasting/OrdinalMeter";
+import {
+  INTENSITY_5,
+  SWEETNESS,
+  LEVEL_5,
+  BODY,
+  FINISH,
+  QUALITY,
+  READINESS,
+} from "@/lib/tasting/sat-vocabulary";
 import {
   aggregateNotes,
   modeOf,
@@ -123,28 +133,34 @@ export default async function RevealPage({ params }: { params: Params }) {
     }
   };
 
-  type ProfileRow = { label: string; value: string };
+  type ProfileRow = {
+    label: string;
+    value: string;
+    scale: readonly string[];
+    raw: string;
+  };
   function buildProfile(rows: NoteRow[], wineType: string | undefined): ProfileRow[] {
     if (rows.length === 0) return [];
     const out: ProfileRow[] = [];
     const push = (
       label: string,
       raw: string | null,
-      fn: (k: string) => string
+      fn: (k: string) => string,
+      scale: readonly string[]
     ) => {
       const t = safe(fn, raw);
-      if (t) out.push({ label, value: t });
+      if (t && raw) out.push({ label, value: t, scale, raw });
     };
-    push("Цвет", modeOf(rows.map((r) => r.appearance?.intensity)), tIntensity);
-    push("Аромат", modeOf(rows.map((r) => r.nose?.intensity)), tIntensity);
-    push("Сладость", modeOf(rows.map((r) => r.palate?.sweetness)), tSweet);
-    push("Кислотность", modeOf(rows.map((r) => r.palate?.acidity)), tLevel);
+    push("Цвет", modeOf(rows.map((r) => r.appearance?.intensity)), tIntensity, INTENSITY_5);
+    push("Аромат", modeOf(rows.map((r) => r.nose?.intensity)), tIntensity, INTENSITY_5);
+    push("Сладость", modeOf(rows.map((r) => r.palate?.sweetness)), tSweet, SWEETNESS);
+    push("Кислотность", modeOf(rows.map((r) => r.palate?.acidity)), tLevel, LEVEL_5);
     if (wineType === "red")
-      push("Танины", modeOf(rows.map((r) => r.palate?.tannin)), tLevel);
-    push("Тельность", modeOf(rows.map((r) => r.palate?.body)), tBody);
-    push("Послевкусие", modeOf(rows.map((r) => r.palate?.finish)), tFinish);
-    push("Качество", modeOf(rows.map((r) => r.conclusion?.quality)), tQuality);
-    push("Зрелость", modeOf(rows.map((r) => r.conclusion?.readiness)), tReadiness);
+      push("Танины", modeOf(rows.map((r) => r.palate?.tannin)), tLevel, LEVEL_5);
+    push("Тельность", modeOf(rows.map((r) => r.palate?.body)), tBody, BODY);
+    push("Послевкусие", modeOf(rows.map((r) => r.palate?.finish)), tFinish, FINISH);
+    push("Качество", modeOf(rows.map((r) => r.conclusion?.quality)), tQuality, QUALITY);
+    push("Зрелость", modeOf(rows.map((r) => r.conclusion?.readiness)), tReadiness, READINESS);
     return out;
   }
 
@@ -279,6 +295,11 @@ export default async function RevealPage({ params }: { params: Params }) {
                 )}
               </h2>
               <p className="text-sm text-muted italic mb-1">
+                <span
+                  className="inline-block w-2 h-2 rounded-full align-middle mr-2"
+                  style={{ background: wineTypeColor(wine?.wine_type) }}
+                  aria-hidden
+                />
                 {[wine?.vintage, wineTypeRu(wine?.wine_type)]
                   .filter(Boolean)
                   .join(" · ")}
@@ -323,15 +344,18 @@ export default async function RevealPage({ params }: { params: Params }) {
               const profile = buildProfile(wineNotes, wine?.wine_type);
               if (profile.length === 0) return null;
               return (
-                <dl className="max-w-md mx-auto grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 mt-2 mb-2">
+                <dl className="max-w-md mx-auto grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-5 mt-2 mb-2">
                   {profile.map((row) => (
-                    <div key={row.label} className="text-center">
-                      <dt className="smallcaps text-[10px] text-muted mb-0.5">
-                        {row.label}
-                      </dt>
-                      <dd className="font-display italic text-base text-foreground">
-                        {row.value}
-                      </dd>
+                    <div key={row.label}>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <dt className="smallcaps text-[10px] text-muted">
+                          {row.label}
+                        </dt>
+                        <dd className="font-display italic text-sm text-foreground">
+                          {row.value}
+                        </dd>
+                      </div>
+                      <OrdinalMeter scale={row.scale} value={row.raw} />
                     </div>
                   ))}
                 </dl>
@@ -431,13 +455,21 @@ export default async function RevealPage({ params }: { params: Params }) {
                 )}
 
                 {agg?.mean !== null && agg?.mean !== undefined && (
-                  <div className="flex items-baseline gap-2 mb-3">
-                    <span className="score-mark text-3xl">
-                      {Math.round(agg.mean)}
-                    </span>
-                    <span className="smallcaps text-[10px] text-muted">
-                      /100 · место {idx + 2} из {ranked.length}
-                    </span>
+                  <div className="mb-3">
+                    <div className="flex items-baseline gap-2">
+                      <span className="score-mark text-3xl">
+                        {Math.round(agg.mean)}
+                      </span>
+                      <span className="smallcaps text-[10px] text-muted">
+                        /100 · место {idx + 2} из {ranked.length}
+                      </span>
+                    </div>
+                    <div className="score-bar mt-2 max-w-[14rem]" aria-hidden>
+                      <div
+                        className="score-bar__fill"
+                        style={{ width: `${Math.max(0, Math.min(100, agg.mean))}%` }}
+                      />
+                    </div>
                   </div>
                 )}
 
