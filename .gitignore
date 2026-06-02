@@ -43,7 +43,14 @@ next-env.d.ts
 
 # claude-code session metadata
 .omc/
+.claude/
 
 # supabase local-dev temp
 /supabase/.temp/
 /supabase/.branches/
+
+# playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
