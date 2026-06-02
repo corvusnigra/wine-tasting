@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useSupabaseBrowser } from "@/lib/supabase/use-browser";
 import { EntityAutocomplete } from "./EntityAutocomplete";
+import { LabelPhotoUpload } from "./LabelPhotoUpload";
 import { regionHitFor, appendWineToCatalog } from "@/lib/search/catalog";
 import { normalizeQuery } from "@/lib/search/normalize";
 import type { SearchHit } from "@/lib/search/api";
@@ -45,6 +46,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
   const [vintage, setVintage] = useState<string>("");
   const [abv, setAbv] = useState<string>("");
   const [wineType, setWineType] = useState<WineType>("red");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Existing wines of the chosen producer — to suggest in the name field
@@ -61,6 +63,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
       setVintage("");
       setAbv("");
       setWineType("red");
+      setPhotoUrl(null);
       setProducerWines([]);
     }
   }, [open]);
@@ -109,6 +112,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
         abv: abv ? Number(abv) : null,
         wine_type: wineType,
         grape_ids: grapes.map((g) => g.id),
+        photo_url: photoUrl,
       })
       .select("id, name, vintage, wine_type")
       .single();
@@ -316,6 +320,13 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div>
+              <span className="smallcaps text-[10px] text-muted block mb-3">
+                Фото этикетки
+              </span>
+              <LabelPhotoUpload value={photoUrl} onChange={setPhotoUrl} />
             </div>
 
             <div className="flex gap-3 justify-end pt-4 border-t border-border">
