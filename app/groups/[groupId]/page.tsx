@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/layout/Avatar";
 import { formatDateShort } from "@/lib/utils/date";
+import { plural } from "@/lib/utils/plural";
 
 type Params = Promise<{ groupId: string }>;
 
@@ -53,22 +54,31 @@ export default async function GroupPage({ params }: { params: Params }) {
         <h1 className="font-display italic text-5xl sm:text-6xl md:text-7xl leading-[0.95] mb-4 break-words">
           {group.name}
         </h1>
-        <p className="text-muted italic">
-          {memberCount === 1 ? "1 участник" : `${memberCount} участника`}
-          {" · "}
-          {sessionCount === 0
-            ? "ещё ни одного вечера"
-            : sessionCount === 1
-              ? "1 вечер"
-              : `${sessionCount} вечеров`}
-        </p>
-        {sessionCount > 0 && (
-          <Link
-            href={`/groups/${groupId}/stats`}
-            className="inline-flex items-center gap-1.5 smallcaps text-[11px] text-gold hover:text-gold-light transition-colors mt-4"
-          >
-            память группы →
-          </Link>
+        {sessionCount > 0 ? (
+          <>
+            <div className="flex items-stretch gap-5 sm:gap-7 mt-5">
+              <div className="stat-figure">
+                <span className="fig">{memberCount}</span>
+                <span className="cap">
+                  {plural(memberCount, ["участник", "участника", "участников"])}
+                </span>
+              </div>
+              <span className="stat-rule" />
+              <Link href={`/groups/${groupId}/stats`} className="stat-figure group">
+                <span className="fig group-hover:text-gold-light transition-colors">
+                  {sessionCount}
+                </span>
+                <span className="cap group-hover:text-gold transition-colors">
+                  {plural(sessionCount, ["вечер", "вечера", "вечеров"])} · память →
+                </span>
+              </Link>
+            </div>
+          </>
+        ) : (
+          <p className="text-muted italic">
+            {memberCount === 1 ? "1 участник" : `${memberCount} участника`}
+            {" · ещё ни одного вечера"}
+          </p>
         )}
       </header>
 

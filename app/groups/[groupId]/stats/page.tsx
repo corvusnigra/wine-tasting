@@ -3,6 +3,38 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { computeGroupStats, type StatWine } from "@/lib/tasting/group-stats";
 import { wineTypeRu } from "@/lib/tasting/wine-type";
+import { SWEETNESS, LEVEL_5, BODY } from "@/lib/tasting/sat-vocabulary";
+import { plural } from "@/lib/utils/plural";
+
+/** Static, server-rendered ordinal meter — the gold tick-scale used on the
+ *  tasting card, echoed here so the group palate reads in the same language. */
+function PalateMeter({
+  scale,
+  value,
+}: {
+  scale: readonly string[];
+  value: string;
+}) {
+  const idx = scale.indexOf(value);
+  const pct = idx < 0 || scale.length < 2 ? 0 : (idx / (scale.length - 1)) * 100;
+  return (
+    <div className="scale-meter" aria-hidden>
+      <div className="scale-meter__fill" style={{ width: `${pct}%` }} />
+      <div className="scale-meter__ticks">
+        {scale.map((s, i) => (
+          <span
+            key={s}
+            className={[
+              "scale-meter__tick",
+              idx >= 0 && i <= idx ? "is-on" : "",
+              i === idx ? "is-cursor" : "",
+            ].join(" ")}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type Params = Promise<{ groupId: string }>;
 
@@ -107,10 +139,28 @@ export default async function StatsPage({ params }: { params: Params }) {
           Память группы
         </h1>
         {!empty && (
-          <p className="text-muted italic mt-2">
-            {stats.eveningsCount} вечеров · {stats.winesCount} вин ·{" "}
-            {stats.ratingsCount} оценок
-          </p>
+          <div className="flex items-stretch gap-5 sm:gap-7 mt-6">
+            <div className="stat-figure">
+              <span className="fig">{stats.eveningsCount}</span>
+              <span className="cap">
+                {plural(stats.eveningsCount, ["вечер", "вечера", "вечеров"])}
+              </span>
+            </div>
+            <span className="stat-rule" />
+            <div className="stat-figure">
+              <span className="fig">{stats.winesCount}</span>
+              <span className="cap">
+                {plural(stats.winesCount, ["вино", "вина", "вин"])}
+              </span>
+            </div>
+            <span className="stat-rule" />
+            <div className="stat-figure">
+              <span className="fig">{stats.ratingsCount}</span>
+              <span className="cap">
+                {plural(stats.ratingsCount, ["оценка", "оценки", "оценок"])}
+              </span>
+            </div>
+          </div>
         )}
       </header>
 
@@ -129,24 +179,56 @@ export default async function StatsPage({ params }: { params: Params }) {
               <h2 className="smallcaps text-xs text-muted mb-5 rule-left">
                 Лучшие вина
               </h2>
-              <ol className="flex flex-col">
-                {stats.topWines.map((w, i) => (
-                  <li
-                    key={w.wisId}
-                    className="grid grid-cols-[2.5rem_1fr_auto] gap-4 items-baseline py-4 border-t border-border first:border-t-0"
-                  >
-                    <span className="editorial-num text-3xl text-gold-soft">
-                      {i + 1}
-                    </span>
-                    <span className="font-display text-xl break-words">
-                      {w.name}
-                      {w.vintage && (
-                        <span className="text-muted italic text-sm ml-2">{w.vintage}</span>
-                      )}
-                    </span>
-                    <span className="score-mark text-2xl">{Math.round(w.avg)}</span>
-                  </li>
-                ))}
+              <ol className="flex flex-col gap-1">
+                {stats.topWines.map((w, i) => {
+                  const top = i === 0;
+                  return (
+                    <li
+                      key={w.wisId}
+                      className={
+                        top
+                          ? "row-laureate grid grid-cols-[2.5rem_1fr_auto] gap-4 items-center px-4 py-5"
+                          : "grid grid-cols-[2.5rem_1fr_auto] gap-4 items-baseline py-4 border-t border-border"
+                      }
+                    >
+                      <span
+                        className={
+                          top
+                            ? "editorial-num text-4xl text-gold"
+                            : "editorial-num text-3xl text-gold-soft"
+                        }
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="min-w-0">
+                        <span
+                          className={
+                            top
+                              ? "font-display text-2xl break-words block leading-tight"
+                              : "font-display text-xl break-words block leading-tight"
+                          }
+                        >
+                          {w.name}
+                          {w.vintage && (
+                            <span className="text-muted italic text-sm ml-2">
+                              {w.vintage}
+                            </span>
+                          )}
+                        </span>
+                        {top && (
+                          <span className="smallcaps text-[10px] text-gold mt-1 inline-block">
+                            фаворит группы
+                          </span>
+                        )}
+                      </span>
+                      <span
+                        className={top ? "score-mark text-3xl" : "score-mark text-2xl"}
+                      >
+                        {Math.round(w.avg)}
+                      </span>
+                    </li>
+                  );
+                })}
               </ol>
             </section>
           )}
@@ -156,22 +238,25 @@ export default async function StatsPage({ params }: { params: Params }) {
             <h2 className="smallcaps text-xs text-muted mb-5 rule-left">
               Вкус группы
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
               {[
-                { label: "Сладость", v: stats.groupPalate.sweetness, m: SWEET_RU },
-                { label: "Кислотность", v: stats.groupPalate.acidity, m: LEVEL_RU },
-                { label: "Танины", v: stats.groupPalate.tannin, m: LEVEL_RU },
-                { label: "Тельность", v: stats.groupPalate.body, m: BODY_RU },
+                { label: "Сладость", v: stats.groupPalate.sweetness, m: SWEET_RU, scale: SWEETNESS },
+                { label: "Кислотность", v: stats.groupPalate.acidity, m: LEVEL_RU, scale: LEVEL_5 },
+                { label: "Танины", v: stats.groupPalate.tannin, m: LEVEL_RU, scale: LEVEL_5 },
+                { label: "Тельность", v: stats.groupPalate.body, m: BODY_RU, scale: BODY },
               ]
                 .filter((x) => x.v)
                 .map((x) => (
                   <div key={x.label}>
-                    <div className="smallcaps text-[10px] text-muted mb-0.5">
-                      {x.label}
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="smallcaps text-[10px] text-muted">
+                        {x.label}
+                      </span>
+                      <span className="font-display italic text-lg text-foreground">
+                        {x.m[x.v as string] ?? x.v}
+                      </span>
                     </div>
-                    <div className="font-display italic text-lg text-foreground">
-                      {x.m[x.v as string] ?? x.v}
-                    </div>
+                    <PalateMeter scale={x.scale} value={x.v as string} />
                   </div>
                 ))}
             </div>

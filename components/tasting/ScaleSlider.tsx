@@ -22,6 +22,12 @@ export function ScaleSlider<T extends string>({
 }: Props<T>) {
   const [showHint, setShowHint] = useState(false);
 
+  const selectedIdx = value ? options.indexOf(value) : -1;
+  const fillPct =
+    selectedIdx < 0 || options.length < 2
+      ? 0
+      : (selectedIdx / (options.length - 1)) * 100;
+
   return (
     <fieldset className="min-w-0">
       <div className="flex items-center gap-2 mb-2.5">
@@ -86,6 +92,23 @@ export function ScaleSlider<T extends string>({
             </button>
           );
         })}
+      </div>
+
+      {/* Ordinal meter — fills toward the chosen level. */}
+      <div className="scale-meter" aria-hidden>
+        <div className="scale-meter__fill" style={{ width: `${fillPct}%` }} />
+        <div className="scale-meter__ticks">
+          {options.map((opt, i) => (
+            <span
+              key={opt}
+              className={cn(
+                "scale-meter__tick",
+                selectedIdx >= 0 && i <= selectedIdx && "is-on",
+                i === selectedIdx && "is-cursor"
+              )}
+            />
+          ))}
+        </div>
       </div>
     </fieldset>
   );
