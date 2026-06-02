@@ -3,7 +3,7 @@
 // We DO NOT intercept Supabase requests — data/auth/realtime go straight
 // to the network so the SW can never degrade or break data fetching.
 
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC_CACHE = `sn-static-${VERSION}`;
 const OFFLINE_URL = "/offline";
 
