@@ -56,28 +56,28 @@ export default async function WinePage({ params }: { params: Params }) {
 
   return (
     <div className="max-w-3xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 w-full wine-vignette">
-      <header className="mb-8 flex items-start gap-5">
-        {photoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={photoUrl}
-            alt="Этикетка"
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-gold/40 shrink-0"
-          />
-        )}
-        <div className="min-w-0">
-          <h1 className="font-display italic text-4xl sm:text-5xl mb-2 break-words">
-            {wine.name}
-          </h1>
-          <div className="text-sm text-muted italic">
-            {[
-              wine.vintage,
-              wineTypeRu(wine.wine_type),
-              wine.producers?.name,
-              wine.regions?.name_ru,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
+      <header className="mb-10 anim-fade-up">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-6 sm:gap-8">
+          {photoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photoUrl}
+              alt="Этикетка"
+              className="w-40 h-52 sm:w-44 sm:h-56 object-cover rounded-2xl border border-gold/40 shadow-[0_14px_44px_-12px_rgba(0,0,0,0.6)] shrink-0 self-center sm:self-end"
+            />
+          )}
+          <div className="min-w-0">
+            <p className="smallcaps text-xs text-gold mb-3">
+              {wineTypeRu(wine.wine_type) ?? "вино"}
+            </p>
+            <h1 className="font-display italic text-4xl sm:text-6xl leading-[0.95] mb-3 break-words">
+              {wine.name}
+            </h1>
+            <div className="text-muted italic">
+              {[wine.vintage, wine.producers?.name, wine.regions?.name_ru]
+                .filter(Boolean)
+                .join(" · ")}
+            </div>
           </div>
         </div>
       </header>
@@ -95,7 +95,7 @@ export default async function WinePage({ params }: { params: Params }) {
       )}
 
       <section>
-        <h2 className="text-sm uppercase tracking-wider text-muted mb-3">
+        <h2 className="smallcaps text-xs text-muted mb-5 rule-left">
           История дегустаций
         </h2>
         {rows.length > 0 ? (
@@ -124,7 +124,7 @@ export default async function WinePage({ params }: { params: Params }) {
                       </div>
                     </div>
                     {mean !== null && (
-                      <div className="font-display text-2xl text-gold">
+                      <div className="score-mark text-2xl shrink-0">
                         {Math.round(mean)}
                       </div>
                     )}

@@ -43,7 +43,7 @@ export default async function SessionPage({ params }: { params: Params }) {
   const { data: winesInSession } = await supabase
     .from("wines_in_session")
     .select(
-      "id, position, revealed, wines(id, name, vintage, wine_type, country_code, producer_id, region_id)"
+      "id, position, revealed, wines(id, name, vintage, wine_type, country_code, producer_id, region_id, photo_url)"
     )
     .eq("session_id", sessionId)
     .order("position", { ascending: true });
@@ -209,20 +209,30 @@ export default async function SessionPage({ params }: { params: Params }) {
                       {String(w.position).padStart(2, "0")}
                     </div>
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="font-display text-xl sm:text-2xl group-hover:text-gold transition-colors break-words">
-                      {wine?.name ?? "—"}
-                    </h3>
-                    <p className="text-sm text-muted italic mt-1">
-                      <span
-                        className="inline-block w-2 h-2 rounded-full align-middle mr-2"
-                        style={{ background: wineTypeColor(wine?.wine_type) }}
-                        aria-hidden
+                  <div className="min-w-0 flex items-center gap-3">
+                    {wine?.photo_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={wine.photo_url}
+                        alt=""
+                        className="w-10 h-10 rounded-lg object-cover border border-gold/30 shrink-0"
                       />
-                      {[wine?.vintage, wineTypeRu(wine?.wine_type)]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="font-display text-xl sm:text-2xl group-hover:text-gold transition-colors break-words">
+                        {wine?.name ?? "—"}
+                      </h3>
+                      <p className="text-sm text-muted italic mt-1">
+                        <span
+                          className="inline-block w-2 h-2 rounded-full align-middle mr-2"
+                          style={{ background: wineTypeColor(wine?.wine_type) }}
+                          aria-hidden
+                        />
+                        {[wine?.vintage, wineTypeRu(wine?.wine_type)]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     {youDone ? (
@@ -234,9 +244,11 @@ export default async function SessionPage({ params }: { params: Params }) {
                         оценить →
                       </span>
                     )}
-                    <span className="smallcaps text-[10px] text-muted">
-                      все: {completed}/{totalMembers}
-                    </span>
+                    {totalMembers > 0 && (
+                      <span className="smallcaps text-[10px] text-muted">
+                        все: {completed}/{totalMembers}
+                      </span>
+                    )}
                   </div>
                 </Link>
               </li>

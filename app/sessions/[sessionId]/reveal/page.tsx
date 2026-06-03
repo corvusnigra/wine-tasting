@@ -55,7 +55,7 @@ export default async function RevealPage({ params }: { params: Params }) {
   const { data: wines } = await supabase
     .from("wines_in_session")
     .select(
-      "id, position, revealed, wines(id, name, vintage, wine_type, producers(name), regions(name_ru))"
+      "id, position, revealed, wines(id, name, vintage, wine_type, photo_url, producers(name), regions(name_ru))"
     )
     .eq("session_id", sessionId)
     .order("position", { ascending: true });
@@ -73,6 +73,7 @@ export default async function RevealPage({ params }: { params: Params }) {
     name: string;
     vintage: number | null;
     wine_type: string;
+    photo_url: string | null;
     producers: { name: string } | null;
     regions: { name_ru: string } | null;
   };
@@ -285,6 +286,14 @@ export default async function RevealPage({ params }: { params: Params }) {
             </div>
 
             <div className="flex flex-col items-center text-center">
+              {wine?.photo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={wine.photo_url}
+                  alt="Этикетка"
+                  className="w-28 h-36 sm:w-32 sm:h-40 object-cover rounded-2xl border border-gold/40 shadow-[0_10px_36px_-10px_rgba(201,162,76,0.5)] mb-5"
+                />
+              )}
               <h2 className="font-display text-3xl sm:text-5xl mb-2 break-words">
                 {wine?.id ? (
                   <Link href={`/wines/${wine.id}`} className="hover:text-gold transition-colors">
@@ -432,15 +441,25 @@ export default async function RevealPage({ params }: { params: Params }) {
                 </div>
               </div>
               <div className="min-w-0">
-                <h2 className="font-display text-xl sm:text-2xl mb-1 break-words">
-                  {wine?.id ? (
-                    <Link href={`/wines/${wine.id}`} className="hover:text-gold transition-colors">
-                      {wine.name}
-                    </Link>
-                  ) : (
-                    wine?.name
+                <div className="flex items-center gap-3 mb-1">
+                  {wine?.photo_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={wine.photo_url}
+                      alt=""
+                      className="w-11 h-11 rounded-lg object-cover border border-gold/30 shrink-0"
+                    />
                   )}
-                </h2>
+                  <h2 className="font-display text-xl sm:text-2xl break-words">
+                    {wine?.id ? (
+                      <Link href={`/wines/${wine.id}`} className="hover:text-gold transition-colors">
+                        {wine.name}
+                      </Link>
+                    ) : (
+                      wine?.name
+                    )}
+                  </h2>
+                </div>
                 <p className="text-sm text-muted italic mb-1">
                   {[wine?.vintage, wineTypeRu(wine?.wine_type)]
                     .filter(Boolean)

@@ -39,6 +39,12 @@ export function RevealConfetti() {
       });
       if (Date.now() < end) requestAnimationFrame(frame);
     })();
+
+    // Clear the canvas-confetti surface on unmount so stray particles don't
+    // linger over the next page during a client navigation.
+    return () => {
+      confetti.reset();
+    };
   }, []);
 
   return null;

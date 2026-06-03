@@ -231,7 +231,14 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
               </div>
             </div>
 
-            {/* Advanced — producer, region, grapes, vintage, abv, photo. */}
+            <div>
+              <span className="smallcaps text-[10px] text-muted block mb-3">
+                Фото этикетки
+              </span>
+              <LabelPhotoUpload value={photoUrl} onChange={setPhotoUrl} />
+            </div>
+
+            {/* Advanced — producer, region, grapes, vintage, abv. */}
             <button
               type="button"
               onClick={() => setShowAdvanced((v) => !v)}
@@ -336,12 +343,6 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
                   </div>
                 </div>
 
-                <div>
-                  <span className="smallcaps text-[10px] text-muted block mb-3">
-                    Фото этикетки
-                  </span>
-                  <LabelPhotoUpload value={photoUrl} onChange={setPhotoUrl} />
-                </div>
               </div>
             )}
 
