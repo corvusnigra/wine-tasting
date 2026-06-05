@@ -3,7 +3,10 @@ import type { Database } from "@/lib/supabase/types";
 
 /**
  * Ensure the authenticated user belongs to at least one group.
- * If they do not — create «Моя компания» and add them as owner.
+ *
+ * If `DEFAULT_GROUP_ID` is set, newcomers JOIN that shared group as a member
+ * (so everyone who signs in lands in the same group and sees its evenings).
+ * Otherwise — create a personal «Моя компания» and add them as owner.
  * Idempotent: a no-op when the user is already a member of any group.
  */
 export async function ensureDefaultGroup(
@@ -18,6 +21,16 @@ export async function ensureDefaultGroup(
   if (selErr) throw new Error(`ensureDefaultGroup select: ${selErr.message}`);
   if (existing && existing.length > 0) {
     return { groupId: existing[0].group_id };
+  }
+
+  // Shared default group — everyone joins the same one.
+  const sharedGroupId = process.env.DEFAULT_GROUP_ID;
+  if (sharedGroupId) {
+    const { error: joinErr } = await sb
+      .from("group_members")
+      .insert({ group_id: sharedGroupId, user_id: userId, role: "member" });
+    if (joinErr) throw new Error(`ensureDefaultGroup join: ${joinErr.message}`);
+    return { groupId: sharedGroupId };
   }
 
   const { data: group, error: insGrpErr } = await sb
