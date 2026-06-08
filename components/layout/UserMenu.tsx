@@ -3,6 +3,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { clearGuestId } from "@/lib/guest/guest-id";
 
@@ -21,6 +22,28 @@ export function UserMenu({ displayName, email }: Props) {
   const router = useRouter();
 
   async function handleSignOut() {
+    // Gate: a participant may only leave once they've rated every wine in the
+    // active evening. Nudge them to finish instead of signing out.
+    try {
+      const res = await fetch("/api/auth/can-leave");
+      if (res.ok) {
+        const gate = (await res.json()) as {
+          canLeave: boolean;
+          title?: string;
+          rated?: number;
+          total?: number;
+        };
+        if (!gate.canLeave) {
+          toast.error(
+            `Сначала оцените все вина вечера «${gate.title}» (${gate.rated}/${gate.total})`
+          );
+          return;
+        }
+      }
+    } catch {
+      // If the check fails (offline etc.), don't trap the user — let them out.
+    }
+
     // Local scope clears the session cookie without a (flaky) GoTrue round-trip.
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut({ scope: "local" });
