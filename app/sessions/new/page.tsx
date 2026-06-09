@@ -9,7 +9,7 @@ export default async function NewSessionPage() {
 
   const { data: membership } = await supabase
     .from("group_members")
-    .select("group_id")
+    .select("group_id, role")
     .eq("user_id", userData.user.id)
     .limit(1)
     .maybeSingle();
@@ -21,6 +21,12 @@ export default async function NewSessionPage() {
         <p className="text-muted">Создайте группу или примите приглашение.</p>
       </div>
     );
+  }
+
+  // Only the group owner (admin) creates evenings; guests are sent back to the
+  // group to rate. RLS enforces this server-side too — this is just the UX.
+  if (membership.role !== "owner") {
+    redirect(`/groups/${membership.group_id}`);
   }
 
   return <SessionNewForm groupId={membership.group_id} />;

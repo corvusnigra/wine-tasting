@@ -45,6 +45,10 @@ export default async function GroupPage({ params }: { params: Params }) {
 
   const memberCount = members?.length ?? 0;
   const sessionCount = sessions?.length ?? 0;
+  // Only the group owner (admin) may create evenings; guests just rate.
+  const isOwner = (members ?? []).some(
+    (m) => m.user_id === userData.user!.id && m.role === "owner"
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 pb-28 md:pb-16 w-full wine-vignette">
@@ -96,14 +100,16 @@ export default async function GroupPage({ params }: { params: Params }) {
             ))}
           </div>
         </div>
-        {/* Desktop / tablet: inline CTA. On phones it lives in a fixed
-            bottom bar (below) for thumb reach. */}
-        <Link
-          href="/sessions/new"
-          className="btn-seal h-12 px-7 rounded-full hidden md:inline-flex items-center justify-center gap-2 self-end"
-        >
-          <span>Новый вечер</span>
-        </Link>
+        {/* Desktop / tablet: inline CTA (owner only). On phones it lives in a
+            fixed bottom bar (below) for thumb reach. */}
+        {isOwner && (
+          <Link
+            href="/sessions/new"
+            className="btn-seal h-12 px-7 rounded-full hidden md:inline-flex items-center justify-center gap-2 self-end"
+          >
+            <span>Новый вечер</span>
+          </Link>
+        )}
       </section>
 
       <div className="ornament my-12">
@@ -173,19 +179,21 @@ export default async function GroupPage({ params }: { params: Params }) {
               Создайте «вечер», добавьте 1-3 вина и пришлите ссылку друзьям.
               Приложение запомнит впечатления, средние оценки и аутлаеров.
             </p>
-            <Link
-              href="/sessions/new"
-              className="btn-seal h-12 px-7 rounded-full inline-flex items-center gap-2"
-            >
-                            <span>Создать первый вечер</span>
-            </Link>
+            {isOwner && (
+              <Link
+                href="/sessions/new"
+                className="btn-seal h-12 px-7 rounded-full inline-flex items-center gap-2"
+              >
+                <span>Создать первый вечер</span>
+              </Link>
+            )}
           </div>
         )}
       </section>
 
-      {/* Phone-only fixed CTA — thumb reach. Only when there are sessions
-          (the empty state already shows its own prominent button). */}
-      {sessions && sessions.length > 0 && (
+      {/* Phone-only fixed CTA — thumb reach. Owner only, and only when there
+          are sessions (the empty state shows its own button). */}
+      {isOwner && sessions && sessions.length > 0 && (
         <div className="md:hidden fixed bottom-0 inset-x-0 z-40 px-5 pt-3 pb-safe bg-background border-t border-border shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.5)]">
           <Link
             href="/sessions/new"
