@@ -34,6 +34,7 @@ type DraftNote = {
     acidity?: Level5;
     tannin?: Level5;
     body?: Body;
+    alcohol?: Level5;
     finish?: Finish;
   };
   conclusion: { quality?: Quality; readiness?: Readiness; free_text?: string };
@@ -365,6 +366,18 @@ export function SatCard({
               ) as Record<Body, string>}
               value={draft.palate.body}
               onChange={(v) => setDraft({ ...draft, palate: { ...draft.palate, body: v } })}
+            />
+            <ScaleSlider
+              label="Крепость"
+              hint="Жар и согревающее тепло в глотке. У креплёных (портвейн, херес) — высокая."
+              options={LEVEL_5}
+              optionLabels={Object.fromEntries(
+                LEVEL_5.map((k) => [k, tLevel(k)])
+              ) as Record<Level5, string>}
+              value={draft.palate.alcohol}
+              onChange={(v) =>
+                setDraft({ ...draft, palate: { ...draft.palate, alcohol: v } })
+              }
             />
             <ScaleSlider
               label="Послевкусие"

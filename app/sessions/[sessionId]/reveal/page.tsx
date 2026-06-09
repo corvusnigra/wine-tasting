@@ -100,6 +100,7 @@ export default async function RevealPage({ params }: { params: Params }) {
       acidity?: string;
       tannin?: string;
       body?: string;
+      alcohol?: string;
       finish?: string;
       flavor_descriptors?: string[];
     } | null;
@@ -159,6 +160,7 @@ export default async function RevealPage({ params }: { params: Params }) {
     if (wineType === "red")
       push("Танины", modeOf(rows.map((r) => r.palate?.tannin)), tLevel, LEVEL_5);
     push("Тельность", modeOf(rows.map((r) => r.palate?.body)), tBody, BODY);
+    push("Крепость", modeOf(rows.map((r) => r.palate?.alcohol)), tLevel, LEVEL_5);
     push("Послевкусие", modeOf(rows.map((r) => r.palate?.finish)), tFinish, FINISH);
     push("Качество", modeOf(rows.map((r) => r.conclusion?.quality)), tQuality, QUALITY);
     push("Зрелость", modeOf(rows.map((r) => r.conclusion?.readiness)), tReadiness, READINESS);

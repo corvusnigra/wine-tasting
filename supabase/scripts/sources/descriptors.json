@@ -95,5 +95,13 @@
   { "label_en": "forest floor", "label_ru": "лесная подстилка", "family": "Зрелое", "subfamily": null, "tier": "tertiary" },
   { "label_en": "cigar box", "label_ru": "сигарная коробка", "family": "Зрелое", "subfamily": null, "tier": "tertiary" },
   { "label_en": "petrol", "label_ru": "бензин/керосин", "family": "Зрелое", "subfamily": null, "tier": "tertiary" },
-  { "label_en": "game", "label_ru": "дичь", "family": "Зрелое", "subfamily": null, "tier": "tertiary" }
+  { "label_en": "game", "label_ru": "дичь", "family": "Зрелое", "subfamily": null, "tier": "tertiary" },
+
+  { "label_en": "rancio", "label_ru": "рансьо", "family": "Окислительное", "subfamily": null, "tier": "tertiary" },
+  { "label_en": "toffee", "label_ru": "ирис", "family": "Окислительное", "subfamily": null, "tier": "tertiary" },
+  { "label_en": "molasses", "label_ru": "патока", "family": "Окислительное", "subfamily": null, "tier": "tertiary" },
+  { "label_en": "creme brulee", "label_ru": "крем-брюле", "family": "Окислительное", "subfamily": null, "tier": "tertiary" },
+  { "label_en": "date", "label_ru": "финик", "family": "Сухофрукты", "subfamily": null, "tier": "tertiary" },
+  { "label_en": "dried cherry", "label_ru": "сушёная вишня", "family": "Сухофрукты", "subfamily": null, "tier": "tertiary" },
+  { "label_en": "milk chocolate", "label_ru": "молочный шоколад", "family": "Дуб", "subfamily": null, "tier": "tertiary" }
 ]
