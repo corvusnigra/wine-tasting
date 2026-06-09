@@ -21,6 +21,10 @@ export function QuickEntryForm({ returnTo = "/" }: { returnTo?: string }) {
     setSubmitting(true);
 
     const supabase = createSupabaseBrowserClient();
+    // Always start a fresh guest from the login screen: drop any lingering
+    // session (e.g. the owner's) so typing a name reliably signs you in as
+    // that new person instead of reusing whoever was logged in.
+    await supabase.auth.signOut({ scope: "local" }).catch(() => {});
     try {
       await ensureGuestSession(supabase, name);
     } catch (e) {
