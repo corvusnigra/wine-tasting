@@ -21,10 +21,16 @@ export function QuickEntryForm({ returnTo = "/" }: { returnTo?: string }) {
     setSubmitting(true);
 
     const supabase = createSupabaseBrowserClient();
-    // Always start a fresh guest from the login screen: drop any lingering
-    // session (e.g. the owner's) so typing a name reliably signs you in as
-    // that new person instead of reusing whoever was logged in.
-    await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+    // Keep a returning guest as the SAME person (anonymous session is reused by
+    // ensureGuestSession). Only drop the session if a non-guest (the owner's
+    // e-mail account) is logged in — so "вход по имени" switches to a fresh
+    // guest instead of renaming the owner.
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.user && !session.user.is_anonymous) {
+      await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+    }
     try {
       await ensureGuestSession(supabase, name);
     } catch (e) {
