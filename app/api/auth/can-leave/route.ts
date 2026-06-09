@@ -47,7 +47,9 @@ export async function GET() {
     const total = s.wines_in_session.length;
     if (total === 0) continue;
     const rated = s.wines_in_session.filter((w) => ratedWis.has(w.id)).length;
-    if (rated < total) {
+    // Only block someone who STARTED rating but hasn't finished — don't trap a
+    // casual visitor who never began.
+    if (rated > 0 && rated < total) {
       return NextResponse.json({
         canLeave: false,
         title: s.title,
