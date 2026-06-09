@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -8,25 +9,46 @@ import { QuickEntryForm } from "@/components/auth/QuickEntryForm";
 
 export default function LoginPage() {
   const t = useTranslations("auth.magicLink");
-  const [showEmail, setShowEmail] = useState(false);
+  const router = useRouter();
+  const [showHost, setShowHost] = useState(false);
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  async function onMagicLink(e: React.FormEvent) {
+  // Owner login: e-mail + password — instant, any device, no email round-trip.
+  async function onPasswordLogin(e: React.FormEvent) {
     e.preventDefault();
-    setStatus("sending");
+    setBusy(true);
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setBusy(false);
+      toast.error("Неверный e-mail или пароль");
+      return;
+    }
+    // Ensure group membership (no-op for an existing owner), then enter.
+    await fetch("/api/auth/bootstrap", { method: "POST" }).catch(() => {});
+    router.push("/");
+    router.refresh();
+  }
+
+  // Fallback: email a one-time link (e.g. if password forgotten).
+  async function onMagicLink() {
+    if (!email) {
+      toast.error("Введите e-mail");
+      return;
+    }
+    setBusy(true);
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) {
-      setStatus("idle");
-      toast.error(error.message);
-    } else {
-      setStatus("sent");
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else {
+      setSent(true);
       toast.success(t("sent"));
     }
   }
@@ -48,44 +70,62 @@ export default function LoginPage() {
           <span className="text-xs">·</span>
         </div>
 
-        {showEmail ? (
-          status === "sent" ? (
-            <p className="text-center text-muted italic">{t("sent")}</p>
-          ) : (
-            <form onSubmit={onMagicLink} className="flex flex-col gap-4">
-              <div>
-                <label className="block mb-2 smallcaps text-[10px] text-muted">
-                  {t("emailLabel")}
-                </label>
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t("emailPlaceholder")}
-                  className="input-underline"
-                />
-              </div>
-              <p className="text-xs text-muted italic">
-                Если хотите, чтобы заметки сохранились между устройствами.
-              </p>
+        {showHost ? (
+          <form onSubmit={onPasswordLogin} className="flex flex-col gap-4">
+            <p className="smallcaps text-[10px] text-gold text-center">Вход для хозяина</p>
+            <div>
+              <label className="block mb-2 smallcaps text-[10px] text-muted">
+                {t("emailLabel")}
+              </label>
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t("emailPlaceholder")}
+                className="input-underline"
+              />
+            </div>
+            <div>
+              <label className="block mb-2 smallcaps text-[10px] text-muted">Пароль</label>
+              <input
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="input-underline"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={busy}
+              className="btn-seal h-12 rounded-full inline-flex items-center justify-center"
+            >
+              <span>{busy ? "…" : "Войти"}</span>
+            </button>
+            {sent ? (
+              <p className="text-center text-muted italic text-xs">{t("sent")}</p>
+            ) : (
               <button
-                type="submit"
-                disabled={status === "sending"}
-                className="btn-ghost h-11 px-5 rounded-full smallcaps text-xs"
+                type="button"
+                onClick={onMagicLink}
+                disabled={busy}
+                className="smallcaps text-[10px] text-muted hover:text-gold transition-colors"
               >
-                {t("submit")}
+                забыли пароль? — прислать ссылку на e-mail
               </button>
-            </form>
-          )
+            )}
+          </form>
         ) : (
           <button
             type="button"
-            onClick={() => setShowEmail(true)}
+            onClick={() => setShowHost(true)}
             className="block mx-auto smallcaps text-[11px] text-muted hover:text-gold transition-colors"
           >
-            или войти по e-mail — для постоянных заметок
+            вход для хозяина — по e-mail и паролю
           </button>
         )}
       </div>
