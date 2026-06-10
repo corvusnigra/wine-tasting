@@ -11,7 +11,7 @@ import { regionHitFor, appendWineToCatalog } from "@/lib/search/catalog";
 import { normalizeQuery } from "@/lib/search/normalize";
 import type { SearchHit } from "@/lib/search/api";
 
-type WineType = "red" | "white" | "rose" | "sparkling";
+type WineType = "red" | "white" | "rose" | "sparkling" | "fortified" | "orange";
 
 export type CreatedWine = {
   id: string;
@@ -214,7 +214,7 @@ export function WineCreateDialog({ open, onClose, onCreated }: Props) {
                 {t("type")}
               </span>
               <div className="flex gap-1.5 flex-wrap">
-                {(["red", "white", "rose", "sparkling"] as const).map((tp) => (
+                {(["red", "white", "rose", "sparkling", "fortified", "orange"] as const).map((tp) => (
                   <button
                     key={tp}
                     type="button"

@@ -13,8 +13,11 @@ export async function ensureGuestSession(
   supabase: SupabaseClient<Database>,
   displayName: string
 ): Promise<{ id: string; isNew: boolean }> {
-  const { data: { session } } = await supabase.auth.getSession();
-  let userId = session?.user?.id ?? null;
+  // Validate against the server (getUser), not local storage (getSession): a
+  // stale token left in localStorage after a signOut would otherwise be reused
+  // and we'd rename someone else's profile. One extra round-trip, but correct.
+  const { data: { user } } = await supabase.auth.getUser();
+  let userId = user?.id ?? null;
   let isNew = false;
 
   if (!userId) {

@@ -230,11 +230,11 @@ export default async function RevealPage({ params }: { params: Params }) {
     palate: winner
       ? (aggByWine.get(winner.id)?.topDescriptors ?? []).map((d) => d.label)
       : [],
-    controversial: controversialId
-      ? wineMeta(
-          (wines ?? []).find((w) => w.id === controversialId)!
-        )?.name ?? null
-      : null,
+    controversial: (() => {
+      if (!controversialId) return null;
+      const w = (wines ?? []).find((x) => x.id === controversialId);
+      return w ? (wineMeta(w)?.name ?? null) : null;
+    })(),
   };
 
   return (

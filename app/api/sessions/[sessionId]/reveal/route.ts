@@ -3,13 +3,17 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type Params = Promise<{ sessionId: string }>;
 
-export async function POST(_request: Request, { params }: { params: Params }) {
+export async function POST(request: Request, { params }: { params: Params }) {
   const { sessionId } = await params;
   const supabase = await createSupabaseServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Host may force a reveal even if some participants left without finishing.
+  const body = (await request.json().catch(() => null)) as { force?: boolean } | null;
+  const force = body?.force === true;
 
   const { data: session } = await supabase
     .from("tasting_sessions")
@@ -59,9 +63,10 @@ export async function POST(_request: Request, { params }: { params: Params }) {
   const everyoneDone = Array.from(participants).every(
     (uid) => (completedByUser.get(uid)?.size ?? 0) >= wineIds.length
   );
-  if (!everyoneDone) {
+  // The host can override the "everyone finished" gate when someone left mid-way.
+  if (!everyoneDone && !force) {
     return NextResponse.json(
-      { error: "Не все участники закончили — дождитесь остальных" },
+      { error: "Не все участники закончили — дождитесь остальных", canForce: true },
       { status: 409 }
     );
   }

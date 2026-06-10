@@ -49,6 +49,34 @@ const EMPTY_DRAFT: DraftNote = {
   overall_scale_raw: null,
 };
 
+function readLocalDraft(key: string): DraftNote | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as DraftNote) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalDraft(key: string, draft: DraftNote): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(draft));
+  } catch {
+    /* private mode / quota — the server write is still attempted */
+  }
+}
+
+function clearLocalDraft(key: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+}
+
 const STEP_KEYS = ["appearance", "nose", "palate", "conclusion"] as const;
 type StepKey = (typeof STEP_KEYS)[number];
 const STEP_ROMAN: Record<StepKey, string> = {
@@ -97,11 +125,24 @@ export function SatCard({
   const router = useRouter();
   const supabase = useSupabaseBrowser();
 
+  // Local draft mirror — survives a network stall or an accidental "back" so a
+  // half-filled card isn't lost on the flaky RU↔Frankfurt link. Cleared only
+  // after a successful submit.
+  const lsKey = `sn.draft.${wineInSessionId}`;
+
   const [step, setStep] = useState<StepKey>("appearance");
-  const [draft, setDraft] = useState<DraftNote>(initial ?? EMPTY_DRAFT);
+  const [draft, setDraft] = useState<DraftNote>(() => {
+    const local = readLocalDraft(lsKey);
+    return local ?? initial ?? EMPTY_DRAFT;
+  });
   const [scale, setScale] = useState<Scale>(initialScale);
   const [submitting, setSubmitting] = useState(false);
+  // Autosave status surfaced to the user (idle = nothing to save yet).
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Snapshot of the draft as it was loaded — used to skip autosave until
   // the user actually changes something (avoids ghost empty rows on open).
   const initialSnapshot = useRef(JSON.stringify(initial ?? EMPTY_DRAFT));
@@ -109,13 +150,26 @@ export function SatCard({
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     // Nothing changed yet → don't create/touch a row just because the card opened.
-    if (JSON.stringify(draft) === initialSnapshot.current) return;
+    if (JSON.stringify(draft) === initialSnapshot.current) {
+      // …but if a restored local draft already differs, fall through to save it.
+      if (!readLocalDraft(lsKey)) return;
+    }
+    // Persist to localStorage synchronously — durable even if the network never
+    // succeeds — then debounce the server write.
+    writeLocalDraft(lsKey, draft);
     saveTimer.current = setTimeout(() => void save(false), 800);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft]);
+
+  // Clean up the retry timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+    };
+  }, []);
 
   async function save(submit: boolean) {
     // getSession reads from local storage (no network) — keeps saving fast
@@ -137,12 +191,26 @@ export function SatCard({
       overall_scale_raw: draft.overall_scale_raw,
       ...(submit ? { submitted_at: new Date().toISOString() } : {}),
     };
+    if (!submit) setSaveState("saving");
     const { error } = await supabase
       .from("tasting_notes")
       .upsert(payload, { onConflict: "wine_in_session_id,user_id" });
-    if (error && submit) {
-      toast.error(error.message);
-      throw error;
+    if (error) {
+      if (submit) {
+        toast.error(error.message);
+        throw error;
+      }
+      // Autosave failed (likely a network stall). Surface it and retry — the
+      // draft is safe in localStorage meanwhile.
+      setSaveState("error");
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+      retryTimer.current = setTimeout(() => void save(false), 4000);
+      return;
+    }
+    if (submit) {
+      clearLocalDraft(lsKey);
+    } else {
+      setSaveState("saved");
     }
   }
 
@@ -279,6 +347,9 @@ export function SatCard({
                   })
                 }
                 maxLength={40}
+                onFocus={(e) =>
+                  e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" })
+                }
                 placeholder="рубиновый, лимонно-зелёный, медный …"
                 className="input-underline text-xl"
               />
@@ -343,7 +414,7 @@ export function SatCard({
                 setDraft({ ...draft, palate: { ...draft.palate, acidity: v } })
               }
             />
-            {wineType === "red" && (
+            {(wineType === "red" || wineType === "fortified") && (
               <ScaleSlider
                 label="Танины"
                 hint="Проведите языком по дёснам и зубам. Вяжущая, стягивающая сухость — это танины."
@@ -438,6 +509,9 @@ export function SatCard({
                     conclusion: { ...draft.conclusion, free_text: e.target.value },
                   })
                 }
+                onFocus={(e) =>
+                  e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" })
+                }
                 placeholder={t("freeTextPlaceholder")}
                 className="w-full bg-transparent border-0 border-b border-border-strong focus:border-gold focus:outline-none transition-colors py-2 font-display italic text-lg resize-none placeholder:text-muted/60"
               />
@@ -467,6 +541,22 @@ export function SatCard({
       </div>
 
       <footer className="fixed bottom-0 inset-x-0 z-50 px-5 sm:px-8 lg:px-12 pt-3 pb-safe bg-background border-t border-border shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.5)]">
+        <div className="max-w-2xl mx-auto min-h-[1rem] mb-1.5">
+          {saveState !== "idle" && (
+            <p
+              className={`smallcaps text-[10px] ${
+                saveState === "error" ? "text-rust" : "text-muted"
+              }`}
+              aria-live="polite"
+            >
+              {saveState === "saving"
+                ? "сохраняю черновик…"
+                : saveState === "saved"
+                  ? "черновик сохранён"
+                  : "нет сети — черновик сохранён на телефоне, повторяю…"}
+            </p>
+          )}
+        </div>
         <div className="max-w-2xl mx-auto flex gap-3">
           <button
             type="button"

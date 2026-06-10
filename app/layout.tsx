@@ -43,6 +43,9 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover" as const,
+  // Shrink the layout when the on-screen keyboard opens so the fixed footer and
+  // text fields in the rating card don't hide behind it.
+  interactiveWidget: "resizes-content" as const,
   themeColor: "#120709",
 };
 

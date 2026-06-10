@@ -29,6 +29,34 @@ export function SessionLiveRefresher({
     let opened = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
 
+    // Throttle refreshes — with many guests autosaving, raw events would fire a
+    // full server re-render per keystroke-ish. Coalesce to at most one per 2s
+    // (leading + trailing) so the table stays live without thrashing every phone.
+    let lastRefresh = 0;
+    let trailing: ReturnType<typeof setTimeout> | null = null;
+    const THROTTLE_MS = 2000;
+    const refresh = () => {
+      const now = Date.now();
+      const elapsed = now - lastRefresh;
+      if (elapsed >= THROTTLE_MS) {
+        lastRefresh = now;
+        router.refresh();
+      } else if (!trailing) {
+        trailing = setTimeout(() => {
+          trailing = null;
+          lastRefresh = Date.now();
+          router.refresh();
+        }, THROTTLE_MS - elapsed);
+      }
+    };
+
+    const stopPolling = () => {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+
     const channel = supabase
       .channel(`session:${sessionId}`)
       .on(
@@ -39,7 +67,7 @@ export function SessionLiveRefresher({
           table: "tasting_notes",
           filter: `wine_in_session_id=in.(${idsKey})`,
         },
-        () => router.refresh()
+        refresh
       )
       .on(
         "postgres_changes",
@@ -49,23 +77,27 @@ export function SessionLiveRefresher({
           table: "wines_in_session",
           filter: `session_id=eq.${sessionId}`,
         },
-        () => router.refresh()
+        refresh
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           opened = true;
+          // Realtime won the race after the fallback already started — stop the
+          // redundant polling so we don't double-refresh.
+          stopPolling();
         }
       });
 
     const fallbackTimer = setTimeout(() => {
       if (!opened) {
-        pollTimer = setInterval(() => router.refresh(), 5000);
+        pollTimer = setInterval(refresh, 5000);
       }
     }, 3000);
 
     return () => {
       clearTimeout(fallbackTimer);
-      if (pollTimer) clearInterval(pollTimer);
+      if (trailing) clearTimeout(trailing);
+      stopPolling();
       void supabase.removeChannel(channel);
     };
   }, [sessionId, idsKey, router, supabase]);

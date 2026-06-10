@@ -40,13 +40,21 @@ export function QuickEntryForm({ returnTo = "/" }: { returnTo?: string }) {
       return;
     }
 
-    // Auto-create «Моя компания» via service-role bootstrap endpoint
-    const bootstrapRes = await fetch("/api/auth/bootstrap", { method: "POST" });
-    if (!bootstrapRes.ok) {
-      const body = (await bootstrapRes.json().catch(() => null)) as
-        | { error?: string }
-        | null;
-      toast.error(body?.error ?? "Не удалось создать группу");
+    // Auto-create «Моя компания» via service-role bootstrap endpoint.
+    // Wrap the fetch itself: a dropped connection throws, and without this the
+    // «Войти» button would hang on "…" forever (this is the guest's first screen).
+    try {
+      const bootstrapRes = await fetch("/api/auth/bootstrap", { method: "POST" });
+      if (!bootstrapRes.ok) {
+        const body = (await bootstrapRes.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        toast.error(body?.error ?? "Не удалось создать группу");
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      toast.error("Нет связи с сервером — попробуйте ещё раз");
       setSubmitting(false);
       return;
     }

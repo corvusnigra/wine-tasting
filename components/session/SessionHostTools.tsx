@@ -70,7 +70,14 @@ export function SessionHostTools({
       return;
     }
     setBusy(true);
-    const res = await fetch(`/api/sessions/${sessionId}`, { method: "DELETE" });
+    let res: Response;
+    try {
+      res = await fetch(`/api/sessions/${sessionId}`, { method: "DELETE" });
+    } catch {
+      setBusy(false);
+      toast.error("Нет связи с сервером — попробуйте ещё раз");
+      return;
+    }
     if (!res.ok) {
       setBusy(false);
       const body = (await res.json().catch(() => null)) as { error?: string } | null;

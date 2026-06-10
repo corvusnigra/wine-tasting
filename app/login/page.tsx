@@ -28,7 +28,16 @@ export default function LoginPage() {
       return;
     }
     // Ensure group membership (no-op for an existing owner), then enter.
-    await fetch("/api/auth/bootstrap", { method: "POST" }).catch(() => {});
+    // Treat a failed bootstrap as a hard error — otherwise the owner lands on
+    // an empty home with no group.
+    try {
+      const res = await fetch("/api/auth/bootstrap", { method: "POST" });
+      if (!res.ok) throw new Error();
+    } catch {
+      setBusy(false);
+      toast.error("Вход выполнен, но не удалось загрузить группу — обновите страницу");
+      return;
+    }
     router.push("/");
     router.refresh();
   }

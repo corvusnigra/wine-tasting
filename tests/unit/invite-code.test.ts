@@ -27,4 +27,12 @@ describe("invite-code", () => {
     expect(isValidInviteCode("abc")).toBe(false);
     expect(isValidInviteCode("0OIl0OIl")).toBe(false);
   });
+
+  it("requested length is always honoured (rejection sampling never short-changes)", () => {
+    for (const len of [6, 8, 10, 16]) {
+      for (let i = 0; i < 200; i++) {
+        expect(generateInviteCode(len)).toHaveLength(len);
+      }
+    }
+  });
 });

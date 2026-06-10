@@ -117,4 +117,12 @@ test("полный цикл: вход → вечер из 3 вин → оцен�
   // The other two wines are revealed too.
   await expect(page.getByText("Мерло Тест")).toBeVisible();
   await expect(page.getByText("Сира Тест")).toBeVisible();
+
+  // Back on the evening page everyone gets a "results are out" banner that
+  // links to the reveal — guests have no other way in (no host button).
+  await page.goto(`/sessions/${sessionId}`);
+  const revealBanner = page.getByRole("link", { name: /Результаты раскрыты/ });
+  await expect(revealBanner).toBeVisible();
+  await revealBanner.click();
+  await page.waitForURL(/\/reveal$/);
 });

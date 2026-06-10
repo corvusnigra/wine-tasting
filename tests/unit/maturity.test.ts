@@ -41,4 +41,14 @@ describe("maturityFor", () => {
     const m = maturityFor("red", 2013, "Bordeaux", NOW);
     expect(m?.note).toBe("год считается слабее обычного");
   });
+
+  it("fortified ages for decades — a 30y port is still peaking", () => {
+    const m = maturityFor("fortified", 1996, null, NOW); // 30y
+    expect(m?.status).toBe("peak");
+  });
+
+  it("orange holds longer than a plain white", () => {
+    const m = maturityFor("orange", 2018, null, NOW); // 8y
+    expect(m?.status).toBe("peak");
+  });
 });

@@ -28,20 +28,20 @@ export default async function TastePage({ params }: { params: Params }) {
     );
   }
 
-  const { data: existing } = await supabase
-    .from("tasting_notes")
-    .select(
-      "appearance, nose, palate, conclusion, overall_scale_raw"
-    )
-    .eq("wine_in_session_id", wis.id)
-    .eq("user_id", userData.user.id)
-    .maybeSingle();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("preferred_scale")
-    .eq("id", userData.user.id)
-    .maybeSingle();
+  // The existing note and the user's preferred scale are independent — parallel.
+  const [{ data: existing }, { data: profile }] = await Promise.all([
+    supabase
+      .from("tasting_notes")
+      .select("appearance, nose, palate, conclusion, overall_scale_raw")
+      .eq("wine_in_session_id", wis.id)
+      .eq("user_id", userData.user.id)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("preferred_scale")
+      .eq("id", userData.user.id)
+      .maybeSingle(),
+  ]);
 
   const initial = existing
     ? {

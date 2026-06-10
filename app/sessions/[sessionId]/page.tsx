@@ -40,18 +40,24 @@ export default async function SessionPage({ params }: { params: Params }) {
 
   const isHost = session.created_by === userId;
 
-  const { data: winesInSession } = await supabase
-    .from("wines_in_session")
-    .select(
-      "id, position, revealed, wines(id, name, vintage, wine_type, country_code, producer_id, region_id, photo_url)"
-    )
-    .eq("session_id", sessionId)
-    .order("position", { ascending: true });
-
-  const { data: members } = await supabase
-    .from("group_members")
-    .select("user_id, role, profiles(display_name)")
-    .eq("group_id", session.group_id);
+  // Wines, members and the invite code are independent of each other — fetch
+  // them in parallel to cut round-trips to Frankfurt (the notes query depends
+  // on the wine ids, so it stays sequential after this).
+  const [{ data: winesInSession }, { data: members }, code] = await Promise.all([
+    supabase
+      .from("wines_in_session")
+      .select(
+        "id, position, revealed, wines(id, name, vintage, wine_type, country_code, producer_id, region_id, photo_url)"
+      )
+      .eq("session_id", sessionId)
+      .order("position", { ascending: true }),
+    supabase
+      .from("group_members")
+      .select("user_id, role, profiles(display_name)")
+      .eq("group_id", session.group_id),
+    // Any group member can share the invite link — not just the host.
+    ensureGroupInvite(supabase, session.group_id, userId).catch(() => null),
+  ]);
 
   const wisIds = (winesInSession ?? []).map((w) => w.id);
   const { data: notes } = wisIds.length
@@ -60,14 +66,6 @@ export default async function SessionPage({ params }: { params: Params }) {
         .select("wine_in_session_id, user_id, submitted_at")
         .in("wine_in_session_id", wisIds)
     : { data: [] };
-
-  // Any group member can share the invite link — not just the host.
-  let code: string | null = null;
-  try {
-    code = await ensureGroupInvite(supabase, session.group_id, userId);
-  } catch {
-    code = null;
-  }
 
   const hdrs = await headers();
   const host = hdrs.get("host") ?? "localhost:3000";
@@ -119,6 +117,10 @@ export default async function SessionPage({ params }: { params: Params }) {
   }
 
   const anyRevealed = (winesInSession ?? []).some((w) => w.revealed);
+  // "Results are out" ≠ anyRevealed: non-blind evenings have revealed=true on
+  // every wine from creation (schema default). The reveal endpoint is what
+  // flips the session to completed — that's the real signal.
+  const resultsOut = session.status === "completed";
   const maxPosition = (winesInSession ?? []).reduce(
     (m, w) => Math.max(m, w.position),
     0
@@ -144,6 +146,25 @@ export default async function SessionPage({ params }: { params: Params }) {
         />
       </header>
 
+      {/* Results are out — everyone (host and guests alike) gets a way in.
+          Without this, guests sit on "ждём остальных" forever after reveal. */}
+      {resultsOut && (
+        <Link
+          href={`/sessions/${sessionId}/reveal`}
+          className="card-edge rounded-2xl px-5 py-4 mb-8 sm:mb-10 flex items-center justify-between gap-4 group active:bg-bordeaux/5 bg-gold/5 border-gold/40"
+        >
+          <div className="min-w-0">
+            <p className="smallcaps text-[10px] text-gold mb-0.5">Готово</p>
+            <p className="font-display italic text-xl group-hover:text-gold transition-colors">
+              Результаты раскрыты
+            </p>
+          </div>
+          <span className="smallcaps text-[11px] text-gold inline-flex items-center gap-1 shrink-0 group-hover:text-gold-light">
+            смотреть →
+          </span>
+        </Link>
+      )}
+
       {/* Host onboarding — only before anyone has rated */}
       {isHost && !anyRevealed && participantCount === 0 && (
         <div className="card-edge rounded-2xl px-5 py-4 mb-8 sm:mb-10">
@@ -156,8 +177,8 @@ export default async function SessionPage({ params }: { params: Params }) {
         </div>
       )}
 
-      {/* Your progress banner */}
-      {totalWines > 0 && (
+      {/* Your progress banner — hidden once results are out (reveal banner takes over) */}
+      {totalWines > 0 && !resultsOut && (
         <div className="card-edge rounded-2xl px-5 py-4 mb-8 sm:mb-10 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="smallcaps text-[10px] text-muted mb-0.5">Ваш прогресс</p>
@@ -277,7 +298,13 @@ export default async function SessionPage({ params }: { params: Params }) {
             );
           })}
         </div>
-        {isHost && <RevealButton sessionId={sessionId} enabled={!!allWinesComplete} />}
+        {isHost && !resultsOut && (
+          <RevealButton
+            sessionId={sessionId}
+            enabled={!!allWinesComplete}
+            canForce={participantCount > 0}
+          />
+        )}
         {isHost && !anyRevealed && (
           <SessionHostTools
             sessionId={sessionId}

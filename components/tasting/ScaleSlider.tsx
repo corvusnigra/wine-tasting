@@ -39,7 +39,7 @@ export function ScaleSlider<T extends string>({
             aria-label="Как проверить"
             aria-expanded={showHint}
             className={cn(
-              "shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full border text-[10px] font-display italic leading-none transition-colors",
+              "shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full border text-[11px] font-display italic leading-none transition-colors",
               showHint
                 ? "bg-gold/15 border-gold text-gold"
                 : "border-gold/40 text-gold/70 hover:border-gold hover:text-gold"
@@ -52,7 +52,7 @@ export function ScaleSlider<T extends string>({
           <button
             type="button"
             onClick={() => onChange(undefined as never)}
-            className="ml-auto shrink-0 text-[10px] text-muted hover:text-rust transition-colors underline-offset-2 hover:underline"
+            className="ml-auto shrink-0 -my-2 py-2 px-1 text-[10px] text-muted hover:text-rust transition-colors underline-offset-2 hover:underline"
           >
             сбросить
           </button>

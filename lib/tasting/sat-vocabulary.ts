@@ -33,11 +33,19 @@ export type Quality = (typeof QUALITY)[number];
 export const READINESS = ["too-young", "drink-now", "potential", "too-old"] as const;
 export type Readiness = (typeof READINESS)[number];
 
-export type WineType = "red" | "white" | "rose" | "sparkling";
+export type WineType =
+  | "red"
+  | "white"
+  | "rose"
+  | "sparkling"
+  | "fortified"
+  | "orange";
 
 export const COLORS_BY_TYPE: Record<WineType, readonly string[]> = {
   red: ["purple", "ruby", "garnet", "tawny"],
   white: ["lemon-green", "lemon", "gold", "amber"],
   rose: ["pink", "salmon", "orange"],
   sparkling: ["lemon-green", "lemon", "gold", "pink", "salmon"],
+  fortified: ["gold", "amber", "ruby", "garnet", "tawny"],
+  orange: ["gold", "amber", "copper"],
 };

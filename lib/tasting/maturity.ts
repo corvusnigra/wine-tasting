@@ -35,6 +35,12 @@ function windowYears(type: WineType): { peakFrom: number; declineAfter: number }
       return { peakFrom: 1, declineAfter: 10 };
     case "rose":
       return { peakFrom: 0, declineAfter: 3 };
+    case "fortified":
+      // Port/sherry/madeira are built to last — very long, forgiving windows.
+      return { peakFrom: 3, declineAfter: 40 };
+    case "orange":
+      // Skin-contact whites hold longer than regular whites.
+      return { peakFrom: 1, declineAfter: 12 };
   }
 }
 

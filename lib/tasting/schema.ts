@@ -26,6 +26,7 @@ export const PalateSchema = z.object({
   acidity: z.enum(LEVEL_5).optional(),
   tannin: z.enum(LEVEL_5).optional(),         // red only
   body: z.enum(BODY).optional(),
+  alcohol: z.enum(LEVEL_5).optional(),        // "Крепость" — esp. for fortified
   finish: z.enum(FINISH).optional(),
   flavor_descriptors: z.array(z.string()).max(20).default([]),
   notes: z.string().max(300).optional(),

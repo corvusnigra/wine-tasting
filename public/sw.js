@@ -3,7 +3,7 @@
 // We DO NOT intercept Supabase requests — data/auth/realtime go straight
 // to the network so the SW can never degrade or break data fetching.
 
-const VERSION = "v3";
+const VERSION = "v4";
 const STATIC_CACHE = `sn-static-${VERSION}`;
 const OFFLINE_URL = "/offline";
 
@@ -80,9 +80,17 @@ async function cacheFirst(request) {
 }
 
 async function networkFirstPage(request) {
+  // Cap the wait: on a QUIC stall the connection hangs without rejecting, so a
+  // plain fetch would spin for the browser's multi-second default. Abort at 8s
+  // and show the offline page — predictable degradation instead of a dead spin.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    return await fetch(request);
+    const res = await fetch(request, { signal: controller.signal });
+    clearTimeout(timer);
+    return res;
   } catch {
+    clearTimeout(timer);
     const cache = await caches.open(STATIC_CACHE);
     const offline = await cache.match(OFFLINE_URL);
     return offline ?? Response.error();
