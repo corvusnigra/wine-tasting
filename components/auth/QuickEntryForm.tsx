@@ -21,14 +21,15 @@ export function QuickEntryForm({ returnTo = "/" }: { returnTo?: string }) {
     setSubmitting(true);
 
     const supabase = createSupabaseBrowserClient();
-    // Keep a returning guest as the SAME person (anonymous session is reused by
-    // ensureGuestSession). Only drop the session if a non-guest (the owner's
-    // e-mail account) is logged in — so "вход по имени" switches to a fresh
-    // guest instead of renaming the owner.
+    // Validate the session against the SERVER (getSession only reads local
+    // storage and can point at a since-deleted user → bootstrap would 401 /
+    // "Unauthorized"). Reuse only a *valid* anonymous guest; drop anything else
+    // — the owner's e-mail account, or a stale/deleted session — so we sign in
+    // fresh under the typed name.
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.user && !session.user.is_anonymous) {
+      data: { user: current },
+    } = await supabase.auth.getUser();
+    if (!current || !current.is_anonymous) {
       await supabase.auth.signOut({ scope: "local" }).catch(() => {});
     }
     try {
