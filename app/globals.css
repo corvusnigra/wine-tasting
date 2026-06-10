@@ -239,7 +239,7 @@ h1, h2, h3, h4, .font-display {
   box-shadow:
     inset 0 1px 0 rgba(242, 233, 216, 0.15),
     0 4px 14px -4px rgba(91, 14, 45, 0.6);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.1s ease;
 }
 .btn-seal:hover {
   transform: translateY(-1px);
@@ -247,8 +247,13 @@ h1, h2, h3, h4, .font-display {
     inset 0 1px 0 rgba(242, 233, 216, 0.2),
     0 8px 22px -6px rgba(91, 14, 45, 0.7);
 }
+/* Pressed = the seal stamped into wax: squash + darken, shadow collapses */
 .btn-seal:active {
-  transform: translateY(0);
+  transform: translateY(1px) scale(0.96);
+  filter: brightness(0.88);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.35),
+    0 1px 4px -2px rgba(91, 14, 45, 0.5);
 }
 .btn-seal:disabled {
   opacity: 0.45;
@@ -602,6 +607,98 @@ button, a, [role="button"] {
   height: 1px;
   background: var(--border);
   transform: translateY(-3px);
+}
+
+/* Step transition on the tasting card — a page being turned */
+@keyframes step-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.anim-step-in {
+  animation: step-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-step-in { animation: none; }
+}
+
+/* Wine-glass ring stain — the mark a glass leaves on a journal page.
+   One per page at most; barely there. */
+.wine-ring-stain {
+  position: absolute;
+  width: 11rem;
+  height: 11rem;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.07;
+  border: 6px solid var(--color-bordeaux-light);
+  box-shadow:
+    inset 0 0 18px 2px rgba(91, 14, 45, 0.8),
+    0 0 14px 1px rgba(91, 14, 45, 0.6);
+  filter: blur(1px);
+  transform: rotate(-8deg) scaleY(0.94);
+}
+
+/* Vintage watermark — oversized year behind a wine hero, magazine style */
+.year-watermark {
+  position: absolute;
+  top: -0.18em;
+  right: -0.05em;
+  font-family: var(--font-display);
+  font-size: clamp(7rem, 26vw, 13rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--foreground);
+  opacity: 0.055;
+  pointer-events: none;
+  user-select: none;
+  z-index: -1;
+  font-feature-settings: "lnum" 1;
+}
+
+/* Reveal ceremony — a blind veil folds away from each placement, bottom of
+   the ranking first, winner last. Pure CSS: the veil overlays the revealed
+   content and folds upward at its --veil-delay. */
+@keyframes veil-fold {
+  0% { opacity: 1; transform: perspective(700px) rotateX(0deg); }
+  55% { opacity: 1; }
+  100% { opacity: 0; transform: perspective(700px) rotateX(-78deg); visibility: hidden; }
+}
+.reveal-stage {
+  position: relative;
+}
+.blind-veil {
+  position: absolute;
+  inset: -0.5rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  background: var(--background);
+  border: 1px dashed rgba(201, 162, 76, 0.45);
+  border-radius: 1rem;
+  transform-origin: top center;
+  animation: veil-fold 0.7s cubic-bezier(0.55, 0, 0.55, 1) both;
+  animation-delay: var(--veil-delay, 0.6s);
+}
+.blind-veil .veil-cap {
+  font-variant: small-caps;
+  letter-spacing: 0.18em;
+  text-transform: lowercase;
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+.blind-veil .veil-num {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--color-gold-soft);
+  font-size: 2.2rem;
+  line-height: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .blind-veil { display: none; }
 }
 
 /* Field group — label and input share editorial column */

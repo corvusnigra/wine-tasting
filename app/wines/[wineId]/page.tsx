@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { wineTypeRu, type WineType } from "@/lib/tasting/wine-type";
+import { WineDisc } from "@/components/wine/WineDisc";
 import { formatDateNumeric } from "@/lib/utils/date";
 import { maturityFor } from "@/lib/tasting/maturity";
 
@@ -56,14 +57,25 @@ export default async function WinePage({ params }: { params: Params }) {
 
   return (
     <div className="max-w-3xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 w-full wine-vignette">
-      <header className="mb-10 anim-fade-up">
+      <header className="mb-10 anim-fade-up relative isolate">
+        {wine.vintage && (
+          <span className="year-watermark" aria-hidden>
+            {wine.vintage}
+          </span>
+        )}
         <div className="flex flex-col sm:flex-row sm:items-end gap-6 sm:gap-8">
-          {photoUrl && (
+          {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={photoUrl}
               alt="Этикетка"
               className="w-40 h-52 sm:w-44 sm:h-56 object-cover rounded-2xl border border-gold/40 shadow-[0_14px_44px_-12px_rgba(0,0,0,0.6)] shrink-0 self-center sm:self-end"
+            />
+          ) : (
+            <WineDisc
+              type={wine.wine_type}
+              size={112}
+              className="shrink-0 self-center sm:self-end opacity-90"
             />
           )}
           <div className="min-w-0">

@@ -313,8 +313,9 @@ export function SatCard({
         </div>
       </header>
 
-      {/* Step body */}
-      <div className="flex-1">
+      {/* Step body — keyed by step so each change re-runs the slide-in,
+          like turning a page of the tasting card */}
+      <div className="flex-1 anim-step-in" key={step}>
         {step === "appearance" && (
           <section className="flex flex-col gap-7">
             <div>

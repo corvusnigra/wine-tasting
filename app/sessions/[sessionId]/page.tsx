@@ -9,7 +9,8 @@ import { SessionLiveRefresher } from "@/components/session/SessionLiveRefresher"
 import { EditableTitle } from "@/components/session/EditableTitle";
 import { SessionHostTools } from "@/components/session/SessionHostTools";
 import { Avatar } from "@/components/layout/Avatar";
-import { wineTypeRu, wineTypeColor } from "@/lib/tasting/wine-type";
+import { wineTypeRu } from "@/lib/tasting/wine-type";
+import { WineDisc } from "@/components/wine/WineDisc";
 import { formatDateLong } from "@/lib/utils/date";
 
 type Params = Promise<{ sessionId: string }>;
@@ -226,29 +227,31 @@ export default async function SessionPage({ params }: { params: Params }) {
                   className="grid grid-cols-[2.5rem_1fr_auto] sm:grid-cols-[3rem_1fr_auto] gap-4 sm:gap-6 items-center py-5 sm:py-6 group active:bg-bordeaux/5"
                 >
                   <div className="text-right">
+                    {/* Lot stamp — auction-catalogue framing for the number */}
+                    <div className="smallcaps text-[9px] text-muted/70 leading-none mb-0.5">
+                      лот
+                    </div>
                     <div className="editorial-num text-3xl sm:text-4xl text-gold-soft group-hover:text-gold transition-colors">
                       {String(w.position).padStart(2, "0")}
                     </div>
+                    <div className="h-px bg-gold/40 mt-1" aria-hidden />
                   </div>
                   <div className="min-w-0 flex items-center gap-3">
-                    {wine?.photo_url && (
+                    {wine?.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={wine.photo_url}
                         alt=""
                         className="w-10 h-10 rounded-lg object-cover border border-gold/30 shrink-0"
                       />
+                    ) : (
+                      <WineDisc type={wine?.wine_type} size={40} className="shrink-0" />
                     )}
                     <div className="min-w-0">
                       <h3 className="font-display text-xl sm:text-2xl group-hover:text-gold transition-colors break-words">
                         {wine?.name ?? "—"}
                       </h3>
                       <p className="text-sm text-muted italic mt-1">
-                        <span
-                          className="inline-block w-2 h-2 rounded-full align-middle mr-2"
-                          style={{ background: wineTypeColor(wine?.wine_type) }}
-                          aria-hidden
-                        />
                         {[wine?.vintage, wineTypeRu(wine?.wine_type)]
                           .filter(Boolean)
                           .join(" · ")}
@@ -293,6 +296,7 @@ export default async function SessionPage({ params }: { params: Params }) {
                 name={m.profiles?.display_name ?? null}
                 role={m.role}
                 done={totalWines > 0 && done >= totalWines}
+                progress={totalWines > 0 ? done / totalWines : undefined}
                 subtitle={totalWines > 0 ? `${done}/${totalWines}` : undefined}
               />
             );

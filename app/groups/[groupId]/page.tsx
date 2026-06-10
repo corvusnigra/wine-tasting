@@ -53,7 +53,12 @@ export default async function GroupPage({ params }: { params: Params }) {
   return (
     <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 pb-28 md:pb-16 w-full wine-vignette">
       {/* Hero */}
-      <header className="mb-12 sm:mb-16 anim-fade-up">
+      <header className="mb-12 sm:mb-16 anim-fade-up relative isolate">
+        {/* The mark a glass left on the journal page — one per page, barely there */}
+        <div
+          className="wine-ring-stain -top-10 right-2 sm:right-16"
+          aria-hidden
+        />
         <p className="smallcaps text-xs text-gold mb-3">Дневник дегустаций</p>
         <h1 className="font-display italic text-5xl sm:text-6xl md:text-7xl leading-[0.95] mb-4 break-words">
           {group.name}

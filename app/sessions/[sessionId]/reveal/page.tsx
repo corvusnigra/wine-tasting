@@ -1,10 +1,13 @@
+import type { CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { RevealConfetti } from "@/components/session/RevealConfetti";
 import { EveningCard } from "@/components/session/EveningCard";
-import { wineTypeRu, wineTypeColor } from "@/lib/tasting/wine-type";
+import { EngravedMedallion } from "@/components/session/EngravedMedallion";
+import { WineDisc } from "@/components/wine/WineDisc";
+import { wineTypeRu } from "@/lib/tasting/wine-type";
 import { formatDateLong } from "@/lib/utils/date";
 import { OrdinalMeter } from "@/components/tasting/OrdinalMeter";
 import {
@@ -237,9 +240,24 @@ export default async function RevealPage({ params }: { params: Params }) {
     })(),
   };
 
+  // Ceremony timing: blind veils fold from the bottom of the ranking upward,
+  // the winner last after a held pause. All values in seconds.
+  const VEIL_BASE = 0.5;
+  const VEIL_STEP = 0.55;
+  const WINNER_PAUSE = 0.6;
+  const winnerDelay = VEIL_BASE + others.length * VEIL_STEP + WINNER_PAUSE;
+  const othersDelay = (idx: number) =>
+    VEIL_BASE + (others.length - 1 - idx) * VEIL_STEP;
+  // Count-up + confetti land right as the winner's veil finishes folding.
+  const winnerRevealMs = Math.round((winnerDelay + 0.7) * 1000);
+
+  const engraving = `SOMMELIER NIGHT · ${formatDateLong(
+    session.session_date
+  )} · ${session.title}`.slice(0, 46);
+
   return (
     <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-16 w-full wine-vignette">
-      {winner && <RevealConfetti />}
+      {winner && <RevealConfetti delayMs={winnerRevealMs} />}
       {/* Hero */}
       <header className="mb-10 sm:mb-14 anim-fade-up">
         <Link
@@ -272,8 +290,16 @@ export default async function RevealPage({ params }: { params: Params }) {
         return (
           <section
             key={winner.id}
-            className="anim-fade-up stagger-1 relative mb-14"
+            className="anim-fade-up stagger-1 reveal-stage relative mb-14"
           >
+            <div
+              className="blind-veil"
+              style={{ "--veil-delay": `${winnerDelay}s` } as CSSProperties}
+              aria-hidden
+            >
+              <span className="veil-cap">вино</span>
+              <span className="veil-num">№ {winner.position}</span>
+            </div>
             <div
               aria-hidden
               className="absolute -inset-x-6 -inset-y-8 bg-gradient-to-b from-gold/8 via-bordeaux/5 to-transparent rounded-3xl -z-10"
@@ -305,12 +331,8 @@ export default async function RevealPage({ params }: { params: Params }) {
                   wine?.name
                 )}
               </h2>
-              <p className="text-sm text-muted italic mb-1">
-                <span
-                  className="inline-block w-2 h-2 rounded-full align-middle mr-2"
-                  style={{ background: wineTypeColor(wine?.wine_type) }}
-                  aria-hidden
-                />
+              <p className="text-sm text-muted italic mb-1 inline-flex items-center gap-2">
+                <WineDisc type={wine?.wine_type} size={16} />
                 {[wine?.vintage, wineTypeRu(wine?.wine_type)]
                   .filter(Boolean)
                   .join(" · ")}
@@ -322,9 +344,12 @@ export default async function RevealPage({ params }: { params: Params }) {
               )}
 
               {agg?.mean !== null && agg?.mean !== undefined && (
-                <div className="medallion mb-3">
-                  <span className="num">{Math.round(agg.mean)}</span>
-                  <span className="unit">/100</span>
+                <div className="mb-3">
+                  <EngravedMedallion
+                    score={agg.mean}
+                    engraving={engraving}
+                    delayMs={winnerRevealMs}
+                  />
                 </div>
               )}
               <p className="smallcaps text-[10px] text-muted mb-6">
@@ -435,8 +460,16 @@ export default async function RevealPage({ params }: { params: Params }) {
           return (
             <article
               key={w.id}
-              className={`grid grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr] gap-x-4 sm:gap-x-8 gap-y-3 anim-fade-up stagger-${Math.min(idx + 2, 5)}`}
+              className={`reveal-stage grid grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr] gap-x-4 sm:gap-x-8 gap-y-3 anim-fade-up stagger-${Math.min(idx + 2, 5)}`}
             >
+              <div
+                className="blind-veil"
+                style={{ "--veil-delay": `${othersDelay(idx)}s` } as CSSProperties}
+                aria-hidden
+              >
+                <span className="veil-cap">вино</span>
+                <span className="veil-num">№ {w.position}</span>
+              </div>
               <div className="text-right">
                 <div className="dropcap text-4xl sm:text-6xl leading-none">
                   {String(w.position).padStart(2, "0")}
