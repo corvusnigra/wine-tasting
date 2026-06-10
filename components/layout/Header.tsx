@@ -21,7 +21,7 @@ export async function Header() {
   }
 
   return (
-    <header className="px-5 sm:px-8 lg:px-12 py-4 sm:py-6 border-b border-border">
+    <header className="px-5 sm:px-8 lg:px-12 pb-4 sm:pb-6 pt-[calc(env(safe-area-inset-top)+1rem)] sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] border-b border-border">
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
         <Link href="/" className="group flex items-center gap-3 min-w-0 flex-1">
           <span className="monogram transition-transform group-hover:rotate-[-6deg] shrink-0">
